@@ -36,6 +36,7 @@ export const signin = async (req, res, next) => {
     if (!validPassword) {
       return next(errorHandler(401, "Invalid Credentials !!"));
     }
+    console.log('user sinned in');
 
     generateToken(validUser, res);
   } catch (error) {
