@@ -2,15 +2,17 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
+import userRoutes from "./routes/user.route.js";
+import authRoutes from "./routes/auth.route.js";
 
-dotenv.config(); 
+dotenv.config();
 
 const app = express();
 
 const allowedOrigins =
   process.env.NODE_ENV === "development"
-    ? ["https://main.d3h2blzs129gim.amplifyapp.com"]
-    : ["http://localhost:5173"];
+    ? ["http://localhost:5173"]
+    : ["https://main.d3h2blzs129gim.amplifyapp.com"];
 
 app.use(
   cors({
@@ -32,11 +34,7 @@ app.use((req, res, next) => {
   next();
 });
 
-//routes import
-import userRoutes from "./routes/user.route.js";
-import authRoutes from "./routes/auth.route.js";
-
-//routes declaration
+// Routes declaration
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/auth", authRoutes);
 
@@ -44,9 +42,9 @@ app.use("/api/v1/auth", authRoutes);
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const message = err.message || "Internal Server Error";
-  
+
   console.error(`[${new Date().toISOString()}] ${message}`);
-  
+
   res.status(statusCode).json({
     success: false,
     message,
