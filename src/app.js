@@ -9,10 +9,7 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins =
-  process.env.NODE_ENV === "development"
-    ? ["http://localhost:5173"]
-    : ["https://main.d3h2blzs129gim.amplifyapp.com"];
+const allowedOrigins = ["https://main.d3h2blzs129gim.amplifyapp.com"];
 
 app.use(
   cors({
