@@ -11,7 +11,7 @@ const app = express();
 
 const allowedOrigins =
   // process.env.NODE_ENV === "development" ? ["http://localhost:5173"]: 
-  ["https://www.stockgenius.ai"]||["https://stockgenius.ai"];
+ ["https://stockgenius.ai"];
 
 app.use(
   cors({
