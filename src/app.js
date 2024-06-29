@@ -10,7 +10,7 @@ const app = express();
 
 const allowedOrigins =
   // process.env.NODE_ENV === "development" ? ["http://localhost:5173"]: 
- ["https://www.stockgenius.ai","https://stockgenius.ai", "https://main.d3h2blzs129gim.amplifyapp.com" ];
+ ["https://www.stockgenius.ai","https://stockgenius.ai", "https://stockgenius-frontend.vercel.app" ];
 //  ["http://localhost:5173"]
 
 app.use(
