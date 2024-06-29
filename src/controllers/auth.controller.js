@@ -79,27 +79,3 @@ export const signout = (req, res) => {
   res.clearCookie('access_token').status(200).json('Signout success!');
 };
 
-export const generateFyersToken = async (req, res) => {
-  try {
-    const { code } = req.body;
-
-    const response = await axios.post('https://api-t1.fyers.in/api/v3/generate-authcode', {
-      client_id: clientId,
-      secret_key: clientSecret,
-      redirect_uri: redirectUri,
-      auth_code: code,
-    });
-
-    if (response.data.s === 'ok') {
-      const { access_token } = response.data;
-      const user = await User.findById(req.userId);
-      user.fyersToken = access_token;
-      await user.save();
-      res.status(200).json({ message: 'Token generated and saved successfully' });
-    } else {
-      res.status(500).json({ error: 'Failed to generate token' });
-    }
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to generate token' });
-  }
-};
