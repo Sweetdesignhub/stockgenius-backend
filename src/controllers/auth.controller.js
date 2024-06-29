@@ -3,10 +3,6 @@ import bcryptjs from "bcryptjs";
 import { errorHandler } from "../utils/errorHandler.js";
 import { generateToken } from "../utils/generateToken.js";
 
-const clientId = 'SH4XR0GZIF-100';
-const clientSecret = 'GLB8Z7TAAW'; 
-const redirectUri = 'hhttps://www.google.com/';
-
 export const signup = async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
