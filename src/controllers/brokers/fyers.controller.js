@@ -1,9 +1,9 @@
-import { fyersModel } from 'fyers-api-v3';
-import fs from 'fs';
-import dotenv from 'dotenv';
+import { fyersModel } from "fyers-api-v3";
+import fs from "fs";
+import dotenv from "dotenv";
 
 dotenv.config();
-const logsDir = './logs';
+const logsDir = "./logs";
 if (!fs.existsSync(logsDir)) {
   fs.mkdirSync(logsDir);
 }
@@ -17,22 +17,33 @@ fyers.setAppId(APPID);
 fyers.setRedirectUrl(REDIRECT_URI);
 
 export const generateAuthCodeUrl = (req, res) => {
+  console.log('enteres');
   const authCodeURL = fyers.generateAuthCode();
+  console.log('generated', authCodeURL);
   res.json({ authCodeURL });
 };
 
 export const generateAccessToken = async (req, res) => {
+  console.log("generateAccessToken");
   const uri = req.body.uri;
+  console.log("uri : ",uri);
   if (!uri) {
-    return res.status(400).json({ error: "URI is required in the request body" });
+    return res
+      .status(400)
+      .json({ error: "URI is required in the request body" });
   }
   const urlParams = new URLSearchParams(uri);
   const authCode = urlParams.get("auth_code");
   if (!authCode) {
     return res.status(400).json({ error: "Auth code not found in URI" });
   }
+  console.log(authCode);
   try {
-    const response = await fyers.generate_access_token({ client_id: APPID, secret_key: SECRET_KEY, auth_code: authCode });
+    const response = await fyers.generate_access_token({
+      client_id: APPID,
+      secret_key: SECRET_KEY,
+      auth_code: authCode,
+    });
     if (response.s === "ok") {
       fyers.setAccessToken(response.access_token);
       res.json({ accessToken: response.access_token });
@@ -330,4 +341,3 @@ export const placeMultipleOrders = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
