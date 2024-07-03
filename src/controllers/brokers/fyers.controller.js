@@ -364,7 +364,7 @@ export const generateAuthCodeUrl = async (req, res) => {
 };
 
 export const generateAccessToken = async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.params.id;
   console.log('userid : ',userId);
   const uri = req.body.uri;
 

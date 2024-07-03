@@ -48,17 +48,23 @@
 
 // export default router;
 
-import express from 'express';
+import express from "express";
 import {
   generateAuthCodeUrl,
   generateAccessToken,
-} from '../../controllers/brokers/fyers.controller.js';
+} from "../../controllers/brokers/fyers.controller.js";
+import { userAuthMiddleware } from "../../middlewares/fyersMiddleware.js";
+import { verifyToken } from "../../utils/verifyUser.js";
 
 const router = express.Router();
 
 // Define routes
-router.get('/generateAuthCodeUrl', generateAuthCodeUrl);
-router.post('/generateAccessToken', generateAccessToken);
+router.get("/generateAuthCodeUrl", verifyToken, generateAuthCodeUrl);
+router.post(
+  "/generateAccessToken",
+  verifyToken,
+  userAuthMiddleware,
+  generateAccessToken
+);
 
 export default router;
-
