@@ -17,15 +17,15 @@ fyers.setAppId(APPID);
 fyers.setRedirectUrl(REDIRECT_URI);
 
 export const generateAuthCodeUrl = (req, res) => {
-  console.log('enteres');
+  console.log("enteres");
   const authCodeURL = fyers.generateAuthCode();
-  console.log('generated', authCodeURL);
+  console.log("generated", authCodeURL);
   res.json({ authCodeURL });
 };
 
 export const generateAccessToken = async (req, res) => {
   const uri = req.body.uri;
-  console.log("uri :",uri);
+  // console.log("uri :",uri);
   if (!uri) {
     return res
       .status(400)
@@ -36,16 +36,20 @@ export const generateAccessToken = async (req, res) => {
   if (!authCode) {
     return res.status(400).json({ error: "Auth code not found in URI" });
   }
-  console.log(authCode);
+  // console.log(authCode);
   try {
     const response = await fyers.generate_access_token({
       client_id: APPID,
       secret_key: SECRET_KEY,
       auth_code: authCode,
+      grant_type: "authorization_code",
     });
     if (response.s === "ok") {
-      fyers.setAccessToken(response.access_token);
-      res.json({ accessToken: response.access_token });
+      console.log(response);
+      // fyers.setAccessToken(response.access_token);
+      // res.json({ accessToken: response.access_token });
+      const accessToken = response.access_token;
+      res.json({ accessToken });
     } else {
       res.status(400).json({ error: response });
     }
@@ -56,6 +60,8 @@ export const generateAccessToken = async (req, res) => {
 
 export const fetchProfile = async (req, res) => {
   try {
+    const fyersAccessToken = req.headers.authorization.split(" ")[1];
+    fyers.setAccessToken(fyersAccessToken);
     const response = await fyers.get_profile();
     res.json(response);
   } catch (error) {
@@ -65,6 +71,8 @@ export const fetchProfile = async (req, res) => {
 
 export const fetchFunds = async (req, res) => {
   try {
+    const fyersAccessToken = req.headers.authorization.split(" ")[1];
+    fyers.setAccessToken(fyersAccessToken);
     const response = await fyers.get_funds();
     res.json(response);
   } catch (error) {
@@ -74,6 +82,9 @@ export const fetchFunds = async (req, res) => {
 
 export const getOrders = async (req, res) => {
   try {
+    const fyersAccessToken = req.headers.authorization.split(" ")[1];
+    // fyers.setAccessToken('eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJhcGkuZnllcnMuaW4iLCJpYXQiOjE3MjE0MTYzNTMsImV4cCI6MTcyMTQzNTQzMywibmJmIjoxNzIxNDE2MzUzLCJhdWQiOlsieDowIiwieDoxIiwieDoyIiwiZDoxIiwiZDoyIl0sInN1YiI6ImFjY2Vzc190b2tlbiIsImF0X2hhc2giOiJnQUFBQUFCbW1ycWhSb29yd3poenJLWmVJblQ0d21yT0JkVXI0cEhiNm1pbU1uTGI4U2NDM3QwWEtBaUg4dHNuTVRuVWNWekIyZ0QtR19kN2h5NXk5a090T3FwWmdGOWhzcDNzMFFER0sxbzM0UUpnb29nTDJJRT0iLCJkaXNwbGF5X25hbWUiOiJBU1dJTkkgR0FKSkFMQSIsIm9tcyI6IksxIiwiaHNtX2tleSI6ImQ5NWQ0MTZmNDc2ZmFiZmUzNzVjMDFiOTA3ZTIwMjc2OTEwNTJiNzZhZmI5OTQ0ZjIwMjA1ZjJlIiwiZnlfaWQiOiJZQTE0MjIxIiwiYXBwVHlwZSI6MTAyLCJwb2FfZmxhZyI6Ik4ifQ.MrmC98yb8E_IfufIUPpNTaOQ1WdR62WTH6GQCpH-SoA');
+    fyers.setAccessToken(fyersAccessToken);
     const response = await fyers.get_orders();
     res.json(response);
   } catch (error) {
@@ -83,6 +94,9 @@ export const getOrders = async (req, res) => {
 
 export const fetchHoldings = async (req, res) => {
   try {
+    const fyersAccessToken = req.headers.authorization.split(" ")[1];
+    // fyers.setAccessToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJhcGkuZnllcnMuaW4iLCJpYXQiOjE3MjE0MTYzNTMsImV4cCI6MTcyMTQzNTQzMywibmJmIjoxNzIxNDE2MzUzLCJhdWQiOlsieDowIiwieDoxIiwieDoyIiwiZDoxIiwiZDoyIl0sInN1YiI6ImFjY2Vzc190b2tlbiIsImF0X2hhc2giOiJnQUFBQUFCbW1ycWhSb29yd3poenJLWmVJblQ0d21yT0JkVXI0cEhiNm1pbU1uTGI4U2NDM3QwWEtBaUg4dHNuTVRuVWNWekIyZ0QtR19kN2h5NXk5a090T3FwWmdGOWhzcDNzMFFER0sxbzM0UUpnb29nTDJJRT0iLCJkaXNwbGF5X25hbWUiOiJBU1dJTkkgR0FKSkFMQSIsIm9tcyI6IksxIiwiaHNtX2tleSI6ImQ5NWQ0MTZmNDc2ZmFiZmUzNzVjMDFiOTA3ZTIwMjc2OTEwNTJiNzZhZmI5OTQ0ZjIwMjA1ZjJlIiwiZnlfaWQiOiJZQTE0MjIxIiwiYXBwVHlwZSI6MTAyLCJwb2FfZmxhZyI6Ik4ifQ.MrmC98yb8E_IfufIUPpNTaOQ1WdR62WTH6GQCpH-SoA");
+    fyers.setAccessToken(fyersAccessToken);
     const response = await fyers.get_holdings();
     res.json(response);
   } catch (error) {
@@ -92,6 +106,8 @@ export const fetchHoldings = async (req, res) => {
 
 export const fetchPositions = async (req, res) => {
   try {
+    const fyersAccessToken = req.headers.authorization.split(" ")[1];
+    fyers.setAccessToken(fyersAccessToken);
     const response = await fyers.get_positions();
     res.json(response);
   } catch (error) {
@@ -101,6 +117,8 @@ export const fetchPositions = async (req, res) => {
 
 export const fetchTrades = async (req, res) => {
   try {
+    const fyersAccessToken = req.headers.authorization.split(" ")[1];
+    fyers.setAccessToken(fyersAccessToken);
     const response = await fyers.get_tradebook();
     res.json(response);
   } catch (error) {
@@ -213,6 +231,8 @@ export const placeOrder = async (req, res) => {
   }
 
   try {
+    const fyersAccessToken = req.headers.authorization.split(" ")[1];
+    fyers.setAccessToken(fyersAccessToken);
     const response = await fyers.place_order(orderDetails);
     res.json(response);
   } catch (error) {
@@ -334,6 +354,8 @@ export const placeMultipleOrders = async (req, res) => {
   }
 
   try {
+    const fyersAccessToken = req.headers.authorization.split(" ")[1];
+    fyers.setAccessToken(fyersAccessToken);
     const response = await fyers.place_multi_order(ordersDetails);
     res.json(response);
   } catch (error) {
