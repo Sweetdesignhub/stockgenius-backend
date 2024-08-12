@@ -10,8 +10,7 @@ const app = express();
 
 const allowedOrigins =
   // process.env.NODE_ENV === "development" ? ["http://localhost:5173"]: 
- ["https://www.stockgenius.ai","http://localhost:5173","https://stockgenius.ai", "https://stockgenius-frontend.vercel.app" ];
-//  ["http://localhost:5173"]
+ ["https://www.stockgenius.ai","http://localhost:5173","https://stockgenius.ai", ];
 
 app.use(
   cors({
@@ -36,7 +35,7 @@ app.use((req, res, next) => {
 // import routes
 import userRoutes from "./routes/user.route.js";
 import authRoutes from "./routes/auth.route.js";
-import fyersRoutes from "./routes/brokers/fyers.route.js";
+import fyersRoutes from "./routes/brokers/fyers/fyers.route.js";
 
 // Routes declaration
 app.use("/api/v1/users", userRoutes);
