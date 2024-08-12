@@ -92,7 +92,7 @@ export const activateAutoTradeBot = async (req, res) => {
       }
       try {
         const currentTime = getCurrentTime();
-        if (currentTime < "09:30" || currentTime > "16:30") {
+        if (currentTime < "09:30" || currentTime > "23:59") {
           user.autoTradeBot = "inactive";
           await user.save();
           clearInterval(loopInterval);
