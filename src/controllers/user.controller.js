@@ -90,6 +90,16 @@ export const activateAutoTradeBot = async (req, res) => {
         await user.save();
         return;
       }
+
+      const currentTime = getCurrentTime();
+      console.log(currentTime);
+
+      if (currentTime >= "09:30" && currentTime <= "16:30") {
+        console.log("Within trading hours");
+      } else {
+        console.log("Outside trading hours");
+      }
+
       try {
         const currentTime = getCurrentTime();
         if (currentTime < "09:30" || currentTime > "16:30") {
@@ -131,7 +141,8 @@ export const activateAutoTradeBot = async (req, res) => {
         await user.save();
 
         // const pythonServerUrl = "http://localhost:8000/autoTradingActivated";
-        const pythonServerUrl = "https://stock-core-engine-1.onrender.com/autoTradingActivated";
+        const pythonServerUrl =
+          "https://stock-core-engine-1.onrender.com/autoTradingActivated";
         const response = await axios.post(pythonServerUrl, {
           userId,
           marginProfit,
@@ -144,7 +155,7 @@ export const activateAutoTradeBot = async (req, res) => {
           ? decisions
           : Object.values(decisions);
 
-          console.log('Decisions Array:', decisionsArray);
+        console.log("Decisions Array:", decisionsArray);
 
         if (!Array.isArray(decisionsArray)) {
           user.autoTradeBot = "inactive";
@@ -153,32 +164,28 @@ export const activateAutoTradeBot = async (req, res) => {
           console.log("Invalid response from auto trading server", decisions);
           return;
         }
-        
-
 
         const orders = decisionsArray
-        .filter((decision) => decision.Decision !== "Hold")
-        // .slice(0, 2) // testing
-        .slice(0, 10)
-        .map((decision, index) => ({
-          symbol: decision.Symbol,
-          qty: 1,
-          type: 2,
-          side: decision.Decision === "Sell" ? -1 : 1,
-          productType: 'INTRADAY',
-          limitPrice: 0,
-          stopPrice: 0,
-          disclosedQty: 0,
-          validity: 'DAY',
-          offlineOrder: false,
-          stopLoss: 0,
-          takeProfit: 0,
-          orderTag: 'autotrade'
-        }));
-        
-      
-      console.log('Generated Orders:', orders);
-        
+          .filter((decision) => decision.Decision !== "Hold")
+          // .slice(0, 2) // testing
+          .slice(0, 10)
+          .map((decision, index) => ({
+            symbol: decision.Symbol,
+            qty: 1,
+            type: 2,
+            side: decision.Decision === "Sell" ? -1 : 1,
+            productType: "INTRADAY",
+            limitPrice: 0,
+            stopPrice: 0,
+            disclosedQty: 0,
+            validity: "DAY",
+            offlineOrder: false,
+            stopLoss: 0,
+            takeProfit: 0,
+            orderTag: "autotrade",
+          }));
+
+        console.log("Generated Orders:", orders);
 
         orders.forEach((order, index) => {
           const { isValid, errors } = validateOrder(order);
