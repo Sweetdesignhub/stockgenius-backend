@@ -30,7 +30,7 @@ export const generateToken = (user, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: '24h', // Token expiration time
     });
-    console.log("Token generated:", token);
+    // console.log("Token generated:", token);
 
     // Set cookie expiry date (24 hours)
     const expiryDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours

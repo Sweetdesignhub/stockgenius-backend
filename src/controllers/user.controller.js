@@ -167,8 +167,8 @@ export const activateAutoTradeBot = async (req, res) => {
 
         const orders = decisionsArray
           .filter((decision) => decision.Decision !== "Hold")
-          // .slice(0, 2) // testing
-          .slice(0, 10)
+          .slice(0, 5) // testing
+          // .slice(0, 10)
           .map((decision, index) => ({
             symbol: decision.Symbol,
             qty: 1,
