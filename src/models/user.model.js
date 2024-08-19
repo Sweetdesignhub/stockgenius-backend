@@ -24,7 +24,13 @@ const userSchema = new Schema(
       default:
         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRAd5avdba8EiOZH8lmV3XshrXx7dKRZvhx-A&s",
     },
-    fyersCredentials: { type: Schema.Types.ObjectId, ref: 'FyersCredentials' }
+    autoTradeBot: {
+      type: String,
+      enum: ["active", "running", "inactive","stopped"],
+      default: "inactive",
+      required: true,
+    },
+    fyersUserDetails: { type: Schema.Types.ObjectId, ref: "FyersUserDetail" },
   },
   {
     timestamps: true,
