@@ -1,22 +1,22 @@
-import User from "../models/user.model.js";
-import { errorHandler } from "../utils/errorHandler.js";
-import bcryptjs from "bcryptjs";
-import axios from "axios";
+import User from '../models/user.js';
+import { errorHandler } from '../utils/errorHandler.js';
+import bcryptjs from 'bcryptjs';
+import axios from 'axios';
 import {
   checkFunds,
   checkHoldings,
   chunkArray,
   getCurrentTime,
-} from "../utils/helper.js";
-import FyersUserDetail from "../models/brokers/fyers/fyersUserDetail.model.js";
-import { validateOrder } from "../utils/validateOrder.js";
+} from '../utils/helper.js';
+import FyersUserDetail from '../models/brokers/fyers/fyersUserDetail.model.js';
+import { validateOrder } from '../utils/validateOrder.js';
 
 export const updateUser = async (req, res, next) => {
   if (!req.user) {
-    return next(errorHandler(401, "Authentication required"));
+    return next(errorHandler(401, 'Authentication required'));
   }
   if (req.user.id !== req.params.id)
-    return next(errorHandler(401, "You can only update your own account!"));
+    return next(errorHandler(401, 'You can only update your own account!'));
   try {
     if (req.body.password) {
       req.body.password = bcryptjs.hashSync(req.body.password, 10);
@@ -45,11 +45,11 @@ export const updateUser = async (req, res, next) => {
 
 export const deleteUser = async (req, res, next) => {
   if (req.user.id !== req.params.id)
-    return next(errorHandler(401, "You can only delete your own account!"));
+    return next(errorHandler(401, 'You can only delete your own account!'));
   try {
     await User.findByIdAndDelete(req.params.id);
-    res.clearCookie("access_token");
-    res.status(200).json("User has been deleted!");
+    res.clearCookie('access_token');
+    res.status(200).json('User has been deleted!');
   } catch (error) {
     next(error);
   }
@@ -288,29 +288,29 @@ export const activateAutoTradeBot = async (req, res) => {
   if (!userId || isNaN(marginProfit) || isNaN(marginLoss)) {
     return res
       .status(400)
-      .json({ message: "Missing or invalid required parameters" });
+      .json({ message: 'Missing or invalid required parameters' });
   }
 
   try {
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: 'User not found' });
     }
 
     const fyersUserDetails = await FyersUserDetail.findOne({ userId });
     if (!fyersUserDetails || !fyersUserDetails.accessToken) {
       return res.status(404).json({
-        message: "Fyers user details not found or access token missing",
+        message: 'Fyers user details not found or access token missing',
       });
     }
 
-    user.autoTradeBot = "active";
+    user.autoTradeBot = 'active';
     await user.save();
 
     const autoTradeLoop = async () => {
-      if (user.autoTradeBot === "stopped") {
-        console.log("Auto-trade loop stopped");
-        user.autoTradeBot = "inactive";
+      if (user.autoTradeBot === 'stopped') {
+        console.log('Auto-trade loop stopped');
+        user.autoTradeBot = 'inactive';
         await user.save();
         clearInterval(user.loopIntervalId); // Stop the interval
         user.loopIntervalId = null; // Clear the interval ID
@@ -319,12 +319,12 @@ export const activateAutoTradeBot = async (req, res) => {
       }
 
       const currentTime = getCurrentTime();
-      if (currentTime < "09:30" || currentTime > "16:30") {
-        user.autoTradeBot = "inactive";
+      if (currentTime < '09:30' || currentTime > '16:30') {
+        user.autoTradeBot = 'inactive';
         await user.save();
         clearInterval(user.loopIntervalId);
         console.log(
-          "Auto trading can only be activated between 9:30 AM and 4:30 PM"
+          'Auto trading can only be activated between 9:30 AM and 4:30 PM'
         );
         return;
       }
@@ -346,18 +346,18 @@ export const activateAutoTradeBot = async (req, res) => {
         const areHoldingsValid = checkHoldings(holdings);
 
         if (!isFundsValid || !areHoldingsValid) {
-          user.autoTradeBot = "inactive";
+          user.autoTradeBot = 'inactive';
           await user.save();
           clearInterval(user.loopIntervalId);
-          console.log("Insufficient funds or no holdings");
+          console.log('Insufficient funds or no holdings');
           return;
         }
 
-        user.autoTradeBot = "running";
+        user.autoTradeBot = 'running';
         await user.save();
 
         const pythonServerUrl =
-          "http://ec2-13-126-36-55.ap-south-1.compute.amazonaws.com:8000/autoTradingActivated";
+          'http://ec2-13-126-36-55.ap-south-1.compute.amazonaws.com:8000/autoTradingActivated';
         const response = await axios.post(pythonServerUrl, {
           userId,
           marginProfit,
@@ -376,31 +376,31 @@ export const activateAutoTradeBot = async (req, res) => {
               symbol: decision.Symbol,
               qty: decision.Quantity,
               type: 2,
-              side: decision.Decision === "Sell" ? -1 : 1,
-              productType: "CNC",
+              side: decision.Decision === 'Sell' ? -1 : 1,
+              productType: 'CNC',
               limitPrice: 0,
               stopPrice: 0,
               disclosedQty: 0,
-              validity: "DAY",
+              validity: 'DAY',
               offlineOrder: false,
               stopLoss: 0,
               takeProfit: 0,
-              orderTag: "autotrade",
+              orderTag: 'autotrade',
             })),
             ...reinvestmentData.map((reinvestment) => ({
               symbol: reinvestment.Symbol,
               qty: reinvestment.Quantity,
               type: 2,
               side: 1,
-              productType: "CNC",
+              productType: 'CNC',
               limitPrice: 0,
               stopPrice: 0,
               disclosedQty: 0,
-              validity: "DAY",
+              validity: 'DAY',
               offlineOrder: false,
               stopLoss: 0,
               takeProfit: 0,
-              orderTag: "autotrade",
+              orderTag: 'autotrade',
             })),
           ];
 
@@ -419,14 +419,14 @@ export const activateAutoTradeBot = async (req, res) => {
             })
             .filter((order) => order !== null); // Remove null entries
 
-          console.log("Validated Orders:", validatedOrders);
-          console.log("Total validated orders:", validatedOrders.length);
+          console.log('Validated Orders:', validatedOrders);
+          console.log('Total validated orders:', validatedOrders.length);
 
           const chunkSize = 10;
           const orderChunks = chunkArray(combinedData, chunkSize);
 
           for (const chunk of orderChunks) {
-            console.log("Placing orders:", chunk);
+            console.log('Placing orders:', chunk);
 
             const accessToken = fyersUserDetails.accessToken;
 
@@ -440,30 +440,30 @@ export const activateAutoTradeBot = async (req, res) => {
                 placeOrderResponse.data;
 
               if (successfulOrders.length > 0) {
-                console.log("Successful orders:", successfulOrders);
+                console.log('Successful orders:', successfulOrders);
               }
 
               if (unsuccessfulOrders.length > 0) {
-                console.log("Failed orders:", unsuccessfulOrders);
+                console.log('Failed orders:', unsuccessfulOrders);
               }
             } catch (error) {
-              console.error("Error placing orders:", error);
+              console.error('Error placing orders:', error);
               throw error; // Re-throw to be caught by outer try-catch
             }
           }
 
-          user.autoTradeBot = "active";
+          user.autoTradeBot = 'active';
           await user.save();
 
           console.log(
-            "Orders placed successfully, auto trade bot set to active"
+            'Orders placed successfully, auto trade bot set to active'
           );
         } else {
-          console.error("Unexpected response format:", response.data);
+          console.error('Unexpected response format:', response.data);
         }
       } catch (error) {
-        console.error("Error in auto trade loop:", error);
-        user.autoTradeBot = "inactive";
+        console.error('Error in auto trade loop:', error);
+        user.autoTradeBot = 'inactive';
         await user.save();
         clearInterval(user.loopIntervalId);
       }
@@ -475,12 +475,12 @@ export const activateAutoTradeBot = async (req, res) => {
     // Run the loop once immediately
     await autoTradeLoop();
 
-    return res.status(200).json({ message: "Auto trade bot activated" });
+    return res.status(200).json({ message: 'Auto trade bot activated' });
   } catch (error) {
-    console.error("Error activating auto trade bot:", error);
+    console.error('Error activating auto trade bot:', error);
     return res
       .status(500)
-      .json({ message: "Server error", error: error.message });
+      .json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -490,18 +490,18 @@ export const deactivateAutoTradeBot = async (req, res) => {
   try {
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: 'User not found' });
     }
 
     // Check if auto-trade is already stopped
-    if (user.autoTradeBot === "stopped") {
+    if (user.autoTradeBot === 'stopped') {
       return res
         .status(400)
-        .json({ message: "Auto-trade loop is already stopped" });
+        .json({ message: 'Auto-trade loop is already stopped' });
     }
 
     // Stop the auto-trade loop
-    user.autoTradeBot = "stopped";
+    user.autoTradeBot = 'stopped';
     await user.save();
 
     if (user.loopIntervalId) {
@@ -510,18 +510,18 @@ export const deactivateAutoTradeBot = async (req, res) => {
       await user.save();
     }
 
-    res.status(200).json({ message: "Auto-trade loop stopped successfully" });
+    res.status(200).json({ message: 'Auto-trade loop stopped successfully' });
   } catch (error) {
-    console.error("Error stopping auto-trade loop:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error('Error stopping auto-trade loop:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
 // Fetch all users with autoTradeBot set to true
 export const fetchAllUsersWithAutoTradeBot = async (req, res) => {
   try {
-    const users = await User.find({ autoTradeBot: "active" }).populate(
-      "fyersUserDetails"
+    const users = await User.find({ autoTradeBot: 'active' }).populate(
+      'fyersUserDetails'
     );
     res.status(200).json(users);
   } catch (error) {
