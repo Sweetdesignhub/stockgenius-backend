@@ -327,7 +327,7 @@ export const activateAutoTradeBot = async (req, res) => {
           user.autoTradeBot = "inactive";
           await user.save();
           clearInterval(user.loopIntervalId);
-          console.log("Insufficient funds or no holdings");
+          console.log("Insufficient funds");
           return;
         }
 
