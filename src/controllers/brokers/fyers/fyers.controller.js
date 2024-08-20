@@ -31,6 +31,7 @@ const updateFyersUserDetails = async (userId, updateData) => {
 export const generateAuthCodeUrl = async (req, res) => {
   try {
     const { userId } = req.params;
+console.log(APPID);
     if (!userId) {
       return res.status(400).json({ error: "User ID is required" });
     }
