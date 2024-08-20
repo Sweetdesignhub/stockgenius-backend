@@ -1,15 +1,19 @@
-import validator from 'validator';
+export const isValidEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
 
-export const isValidEmail = (email) => validator.isEmail(email);
+export const isValidPhoneNumber = (phoneNumber) => {
+  const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+  return phoneRegex.test(phoneNumber);
+};
 
-export const isValidPhoneNumber = (phoneNumber) =>
-  validator.isMobilePhone(phoneNumber);
-
-export const isStrongPassword = (password) =>
-  validator.isStrongPassword(password, {
-    minLength: 8,
-    minLowercase: 1,
-    minUppercase: 1,
-    minNumbers: 1,
-    minSymbols: 1,
-  });
+export const isStrongPassword = (password) => {
+  return (
+    password.length >= 8 &&
+    /[A-Z]/.test(password) &&
+    /[a-z]/.test(password) &&
+    /[0-9]/.test(password) &&
+    /[^A-Za-z0-9]/.test(password)
+  );
+};

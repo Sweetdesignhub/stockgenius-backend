@@ -1,40 +1,44 @@
-import {
-  isValidEmail,
-  isValidPhoneNumber,
-  isStrongPassword,
-} from '../utils/validators.js';
-import { generateOTP, isOTPValid } from '../services/otpService.js';
+import User from '../models/user.js';
 import { sendEmailOTP } from '../services/emailService.js';
+import { generateOTP, isOTPValid } from '../services/otpService.js';
 import { sendPhoneOTP } from '../services/phoneService.js';
 import {
   generateAccessToken,
   generateRefreshToken,
   verifyRefreshToken,
 } from '../services/tokenService.js';
-import User from '../models/user.js';
+import { errorHandler } from '../utils/errorHandler.js';
+import {
+  isStrongPassword,
+  isValidEmail,
+  isValidPhoneNumber,
+} from '../utils/validators.js';
 
-export const signup = async (req, res) => {
+export const signup = async (req, res, next) => {
   const { email, name, password, phoneNumber, country, state } = req.body;
 
   if (!isValidEmail(email)) {
-    return res.status(400).json({ error: 'Invalid email' });
+    return next(errorHandler(400, 'Invalid email'));
   }
 
   if (!isValidPhoneNumber(phoneNumber)) {
-    return res.status(400).json({ error: 'Invalid phone number' });
+    return next(errorHandler(400, 'Invalid phone number'));
   }
 
   if (!isStrongPassword(password)) {
-    return res.status(400).json({ error: 'Password not strong enough' });
+    return next(errorHandler(400, 'Password not strong enough'));
   }
 
   const existingUser = await User.findOne({
     $or: [{ email }, { phoneNumber }],
   });
   if (existingUser) {
-    return res
-      .status(400)
-      .json({ error: 'Email or phone number already in use' });
+    if (existingUser.isEmailVerified) {
+      return next(errorHandler(400, 'Email already in use'));
+    }
+    if (existingUser.isPhoneVerified) {
+      return next(errorHandler(400, 'Phone number already in use'));
+    }
   }
 
   const emailOTP = generateOTP();
@@ -63,16 +67,20 @@ export const signup = async (req, res) => {
     .json({ message: 'User created. Please verify your email and phone.' });
 };
 
-export const verifyEmail = async (req, res) => {
+export const verifyEmail = async (req, res, next) => {
   const { email, otp } = req.body;
 
   const user = await User.findOne({ email });
   if (!user) {
-    return res.status(404).json({ error: 'User not found' });
+    return next(errorHandler(404, 'User not found'));
+  }
+
+  if (user.isEmailVerified) {
+    return next(errorHandler(400, 'Email already verified'));
   }
 
   if (!isOTPValid(user.emailOTP, otp, user.otpExpiry)) {
-    return res.status(400).json({ error: 'Invalid or expired OTP' });
+    return next(errorHandler(400, 'Invalid or expired OTP'));
   }
 
   user.isEmailVerified = true;
@@ -82,16 +90,20 @@ export const verifyEmail = async (req, res) => {
   res.json({ message: 'Email verified successfully' });
 };
 
-export const verifyPhone = async (req, res) => {
+export const verifyPhone = async (req, res, next) => {
   const { phoneNumber, otp } = req.body;
 
   const user = await User.findOne({ phoneNumber });
   if (!user) {
-    return res.status(404).json({ error: 'User not found' });
+    return next(errorHandler(404, 'User not found'));
+  }
+
+  if (user.isPhoneVerified) {
+    return next(errorHandler(400, 'Phone number already verified'));
   }
 
   if (!isOTPValid(user.phoneOTP, otp, user.otpExpiry)) {
-    return res.status(400).json({ error: 'Invalid or expired OTP' });
+    return next(errorHandler(400, 'Invalid or expired OTP'));
   }
 
   user.isPhoneVerified = true;
@@ -99,35 +111,43 @@ export const verifyPhone = async (req, res) => {
   user.otpExpiry = undefined;
   await user.save();
 
+  const accessToken = generateAccessToken(user);
+  const refreshToken = await generateRefreshToken(user);
+
+  res.setHeader('Set-Cookie', [accessToken, refreshToken]);
   res.json({ message: 'Phone number verified successfully' });
 };
 
-export const login = async (req, res) => {
+export const login = async (req, res, next) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
+  console.log(user);
   if (!user || !(await user.comparePassword(password))) {
-    return res.status(401).json({ error: 'Invalid credentials' });
+    return next(errorHandler(401, 'Invalid credentials'));
   }
 
   if (!user.isEmailVerified || !user.isPhoneVerified) {
-    return res.status(403).json({ error: 'Account not fully verified' });
+    return next(errorHandler(403, 'Account not fully verified'));
   }
 
-  const accessToken = generateAccessToken(user._id);
-  const refreshToken = generateRefreshToken(user._id);
+  const accessToken = generateAccessToken(user);
+  const refreshToken = await generateRefreshToken(user);
 
-  res.json({ accessToken, refreshToken });
+  res.setHeader('Set-Cookie', [accessToken, refreshToken]);
+  res.json({ message: 'Login successful' });
 };
 
-export const refreshToken = async (req, res) => {
-  const { refreshToken } = req.body;
-
-  try {
-    const payload = verifyRefreshToken(refreshToken);
-    const accessToken = generateAccessToken(payload.userId);
-    res.json({ accessToken });
-  } catch (error) {
-    res.status(401).json({ error: 'Invalid refresh token' });
+export const refreshToken = async (req, res, next) => {
+  const payload = await verifyRefreshToken(req);
+  if (!payload) {
+    return next(errorHandler(401, 'Invalid refresh token'));
   }
+
+  const user = await User.findById(payload.userId);
+  const accessToken = generateAccessToken(user);
+  const newRefreshToken = await generateRefreshToken(user);
+
+  res.setHeader('Set-Cookie', [accessToken, newRefreshToken]);
+  res.json({ message: 'Access token refreshed' });
 };

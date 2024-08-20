@@ -1,5 +1,4 @@
-import express from 'express';
-import { body } from 'express-validator';
+import { Router } from 'express';
 import {
   signup,
   verifyEmail,
@@ -8,56 +7,30 @@ import {
   refreshToken,
 } from '../controllers/auth.js';
 import { validateRequest } from '../middlewares/validateRequest.js';
-import { authLimiter } from '../middlewares/rateLimiter.js';
+import {
+  validateLogin,
+  validateSignup,
+  validateEmailVerification,
+  validatePhoneVerification,
+} from '../utils/validationRules.js';
 import asyncHandler from '../utils/asyncHandler.js';
 
-const router = express.Router();
+const router = Router();
 
-router.post(
-  '/signup',
-  [
-    body('email').isEmail(),
-    body('name').notEmpty(),
-    body('password').isLength({ min: 8 }),
-    body('phoneNumber').isMobilePhone(),
-    body('country').notEmpty(),
-    body('state').notEmpty(),
+router
+  .post('/signup', validateSignup, validateRequest, asyncHandler(signup))
+  .post(
+    '/verify-email',
+    validateEmailVerification,
     validateRequest,
-  ],
-  asyncHandler(signup)
-);
-
-router.post(
-  '/verify-email',
-  [
-    body('email').isEmail(),
-    body('otp').isLength({ min: 6, max: 6 }),
+    asyncHandler(verifyEmail)
+  )
+  .post(
+    '/verify-phone',
+    validatePhoneVerification,
     validateRequest,
-  ],
-  asyncHandler(verifyEmail)
-);
-
-router.post(
-  '/verify-phone',
-  [
-    body('phoneNumber').isMobilePhone(),
-    body('otp').isLength({ min: 6, max: 6 }),
-    validateRequest,
-  ],
-  asyncHandler(verifyPhone)
-);
-
-router.post(
-  '/login',
-  authLimiter,
-  [body('email').isEmail(), body('password').notEmpty(), validateRequest],
-  asyncHandler(login)
-);
-
-router.post(
-  '/refresh-token',
-  [body('refreshToken').notEmpty(), validateRequest],
-  asyncHandler(refreshToken)
-);
+    asyncHandler(verifyPhone)
+  )
+  .post('/login', validateLogin, validateRequest, asyncHandler(login));
 
 export default router;
