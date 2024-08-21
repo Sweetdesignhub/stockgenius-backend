@@ -356,14 +356,15 @@ export const activateAutoTradeBot = async (req, res) => {
 
         // Call funds API
         const fundsUrl = `https://api.stockgenius.ai/api/v1/fyers/fetchFundsAndSave/${userId}`;
-        const fundsResponse = await axios.post(fundsUrl);
+        const fundsResponse = await axios.post(fundsUrl, {
+          accessToken,
+        });
 
         if (!fundsResponse || fundsResponse.status !== 200) {
           throw new Error("Failed to fetch funds data");
         }
 
-        const funds = fundsResponse.data;
-        console.log("Funds fetched successfully:", funds);
+        console.log("Funds fetched successfully:", fundsResponse.data);
 
         const pythonServerUrl =
           "http://ec2-13-232-40-122.ap-south-1.compute.amazonaws.com:8000/autoTradingActivated";
