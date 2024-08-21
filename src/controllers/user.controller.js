@@ -356,7 +356,7 @@ export const activateAutoTradeBot = async (req, res) => {
 
         // Call funds API
         const fundsUrl = `https://api.stockgenius.ai/api/v1/fyers/fetchFundsAndSave/${userId}`;
-        const fundsResponse = await axios.get(fundsUrl);
+        const fundsResponse = await axios.post(fundsUrl);
 
         if (!fundsResponse || fundsResponse.status !== 200) {
           throw new Error("Failed to fetch funds data");
