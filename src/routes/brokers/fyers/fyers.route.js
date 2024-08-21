@@ -24,7 +24,6 @@ router.post("/fetchFundsAndSave/:userId", verifyToken, fetchFundsAndSave);
 router.post("/fetchHoldingsAndSave/:userId", verifyToken, fetchHoldingsAndSave);
 router.post(
   "/fetchPositionsAndSave/:userId",
-  verifyToken,
   fetchPositionsAndSave
 );
 router.post("/fetchTradesAndSave/:userId", verifyToken, fetchTradesAndSave);

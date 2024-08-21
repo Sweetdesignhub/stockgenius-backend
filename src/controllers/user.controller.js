@@ -314,6 +314,8 @@ export const activateAutoTradeBot = async (req, res) => {
         return;
       }
 
+      const accessToken = fyersUserDetails.accessToken;
+
       try {
         // const fundsResponse = await axios.get(
         //   `https://api.stockgenius.ai/api/v1/fyers/fundsByUserId/${userId}`
@@ -337,11 +339,10 @@ export const activateAutoTradeBot = async (req, res) => {
         // Call positionAndSave API before hitting the Python server
         const positionAndSaveUrl = `https://api.stockgenius.ai/api/v1/fyers/fetchPositionsAndSave/${userId}`;
         const positionAndSaveResponse = await axios.post(positionAndSaveUrl, {
-          accessToken: fyersUserDetails.accessToken,
+          accessToken,
         });
 
         console.log("position : ", positionAndSaveResponse);
-        
 
         if (
           !positionAndSaveResponse ||
@@ -429,21 +430,16 @@ export const activateAutoTradeBot = async (req, res) => {
           for (const chunk of orderChunks) {
             console.log("Placing orders:", chunk);
 
-            const accessToken = fyersUserDetails.accessToken;
-
             try {
               // const placeOrderResponse = await axios.post(
               //   `https://api.stockgenius.ai/api/v1/fyers/placeMultipleOrders/${userId}`,
               //   { accessToken, orders: chunk }
               // );
-
               // const { successfulOrders = [], unsuccessfulOrders = [] } =
               //   placeOrderResponse.data;
-
               // if (successfulOrders.length > 0) {
               //   console.log("Successful orders:", successfulOrders);
               // }
-
               // if (unsuccessfulOrders.length > 0) {
               //   console.log("Failed orders:", unsuccessfulOrders);
               // }
