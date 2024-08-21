@@ -122,7 +122,7 @@ export const login = async (req, res, next) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
-  console.log(user);
+
   if (!user || !(await user.comparePassword(password))) {
     return next(errorHandler(401, 'Invalid credentials'));
   }
@@ -135,7 +135,7 @@ export const login = async (req, res, next) => {
   const refreshToken = await generateRefreshToken(user);
 
   res.setHeader('Set-Cookie', [accessToken, refreshToken]);
-  res.json({ message: 'Login successful' });
+  res.json({ data: user, message: 'Login successful' });
 };
 
 export const refreshToken = async (req, res, next) => {

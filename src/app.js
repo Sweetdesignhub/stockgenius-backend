@@ -18,22 +18,23 @@ dotenv.config();
 const app = express();
 
 app.use(helmet());
-app.use(cors());
+// app.use(cors());
 app.use(morgan('dev'));
 
-// const allowedOrigins =
-//   // process.env.NODE_ENV === "development" ? ["http://localhost:5173"]:
-//  ["https://www.stockgenius.ai","http://localhost:5173","https://stockgenius.ai", ];
+const allowedOrigins = [
+  'https://www.stockgenius.ai',
+  'http://localhost:5173',
+  'https://stockgenius.ai',
+];
 
-// app.use(
-//   cors({
-//     origin: allowedOrigins,
-//     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-//     credentials: true,
-//     optionsSuccessStatus: 204,
-//     allowedHeaders: "Content-Type, Authorization",
-//   })
-// );
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+    optionsSuccessStatus: 204,
+    allowedHeaders: 'Content-Type, Authorization',
+  })
+);
 
 app.use(express.json({ limit: '16kb' }));
 app.use(express.urlencoded({ extended: true, limit: '16kb' }));
