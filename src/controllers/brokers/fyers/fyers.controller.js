@@ -31,7 +31,7 @@ const updateFyersUserDetails = async (userId, updateData) => {
 export const generateAuthCodeUrl = async (req, res) => {
   try {
     const { userId } = req.params;
-console.log(APPID);
+    console.log(APPID);
     if (!userId) {
       return res.status(400).json({ error: "User ID is required" });
     }
@@ -45,7 +45,6 @@ console.log(APPID);
     res.status(500).json({ error: error.message });
   }
 };
-
 
 export const generateAccessToken = async (req, res) => {
   try {
@@ -370,7 +369,6 @@ export const placeMultipleOrders = async (req, res) => {
   const { accessToken, orders } = req.body;
 
   // console.log(orders);
-  
 
   // console.log("place order" , accessToken, orders);
 
@@ -408,7 +406,7 @@ export const placeMultipleOrders = async (req, res) => {
       const unsuccessfulOrders = [];
 
       response.data.forEach((orderResponse, index) => {
-        if (orderResponse.statusCode === 200 && orderResponse.body.s === 'ok') {
+        if (orderResponse.statusCode === 200 && orderResponse.body.s === "ok") {
           successfulOrders.push({
             orderIndex: index,
             ...orderResponse.body,
@@ -426,7 +424,7 @@ export const placeMultipleOrders = async (req, res) => {
         successfulOrders,
         unsuccessfulOrders,
       });
-    }else {
+    } else {
       console.log("Error response details:", response);
       const errors = response.data.map((orderResponse, index) => ({
         orderIndex: index,
