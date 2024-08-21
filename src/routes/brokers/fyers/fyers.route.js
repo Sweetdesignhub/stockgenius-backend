@@ -20,7 +20,7 @@ const router = express.Router();
 router.get("/generateAuthCodeUrl/:userId", verifyToken, generateAuthCodeUrl);
 router.post("/generateAccessToken/:userId", verifyToken, generateAccessToken);
 router.post("/fetchProfileAndSave/:userId", verifyToken, fetchProfileAndSave);
-router.post("/fetchFundsAndSave/:userId", verifyToken, fetchFundsAndSave);
+router.post("/fetchFundsAndSave/:userId", fetchFundsAndSave);
 router.post("/fetchHoldingsAndSave/:userId", verifyToken, fetchHoldingsAndSave);
 router.post(
   "/fetchPositionsAndSave/:userId",

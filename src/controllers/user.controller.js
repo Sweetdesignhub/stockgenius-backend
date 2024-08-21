@@ -342,8 +342,6 @@ export const activateAutoTradeBot = async (req, res) => {
           accessToken,
         });
 
-        // console.log("position : ", positionAndSaveResponse);
-
         if (
           !positionAndSaveResponse ||
           positionAndSaveResponse.status !== 200
@@ -355,6 +353,17 @@ export const activateAutoTradeBot = async (req, res) => {
           "Position and save successful:",
           positionAndSaveResponse.data
         );
+
+        // Call funds API
+        const fundsUrl = `https://api.stockgenius.ai/api/v1/fyers/fetchFundsAndSave/${userId}`;
+        const fundsResponse = await axios.get(fundsUrl);
+
+        if (!fundsResponse || fundsResponse.status !== 200) {
+          throw new Error("Failed to fetch funds data");
+        }
+
+        const funds = fundsResponse.data;
+        console.log("Funds fetched successfully:", funds);
 
         const pythonServerUrl =
           "http://ec2-13-232-40-122.ap-south-1.compute.amazonaws.com:8000/autoTradingActivated";
@@ -466,8 +475,8 @@ export const activateAutoTradeBot = async (req, res) => {
       }
     };
 
-    // Start the loop with an interval of 10 sec
-    user.loopIntervalId = setInterval(autoTradeLoop, 10 * 1000);
+    // Start the loop with an interval of 15 sec
+    user.loopIntervalId = setInterval(autoTradeLoop, 15 * 1000);
 
     // Run the loop once immediately
     await autoTradeLoop();
