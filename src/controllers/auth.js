@@ -1,12 +1,18 @@
 import User from '../models/user.js';
-import { sendEmailOTP } from '../services/emailService.js';
+import {
+  sendEmailOTP,
+  sendPasswordResetEmail,
+} from '../services/emailService.js';
 import { generateOTP, isOTPValid } from '../services/otpService.js';
 import { sendPhoneOTP } from '../services/phoneService.js';
 import {
   generateAccessToken,
   generateRefreshToken,
+  generateToken,
   verifyRefreshToken,
+  verifyToken,
 } from '../services/tokenService.js';
+import asyncHandler from '../utils/asyncHandler.js';
 import { errorHandler } from '../utils/errorHandler.js';
 import {
   isStrongPassword,
@@ -14,7 +20,7 @@ import {
   isValidPhoneNumber,
 } from '../utils/validators.js';
 
-export const signup = async (req, res, next) => {
+export const signup = asyncHandler(async (req, res, next) => {
   const { email, name, password, phoneNumber, country, state } = req.body;
 
   if (!isValidEmail(email)) {
@@ -65,9 +71,9 @@ export const signup = async (req, res, next) => {
   res
     .status(201)
     .json({ message: 'User created. Please verify your email and phone.' });
-};
+});
 
-export const verifyEmail = async (req, res, next) => {
+export const verifyEmail = asyncHandler(async (req, res, next) => {
   const { email, otp } = req.body;
 
   const user = await User.findOne({ email });
@@ -88,9 +94,9 @@ export const verifyEmail = async (req, res, next) => {
   await user.save();
 
   res.json({ message: 'Email verified successfully' });
-};
+});
 
-export const verifyPhone = async (req, res, next) => {
+export const verifyPhone = asyncHandler(async (req, res, next) => {
   const { phoneNumber, otp } = req.body;
 
   const user = await User.findOne({ phoneNumber });
@@ -116,9 +122,9 @@ export const verifyPhone = async (req, res, next) => {
 
   res.setHeader('Set-Cookie', [accessToken, refreshToken]);
   res.json({ message: 'Phone number verified successfully' });
-};
+});
 
-export const login = async (req, res, next) => {
+export const login = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
@@ -136,9 +142,9 @@ export const login = async (req, res, next) => {
 
   res.setHeader('Set-Cookie', [accessToken, refreshToken]);
   res.json({ data: user, message: 'Login successful' });
-};
+});
 
-export const refreshToken = async (req, res, next) => {
+export const refreshToken = asyncHandler(async (req, res, next) => {
   const payload = await verifyRefreshToken(req);
   if (!payload) {
     return next(errorHandler(401, 'Invalid refresh token'));
@@ -150,4 +156,100 @@ export const refreshToken = async (req, res, next) => {
 
   res.setHeader('Set-Cookie', [accessToken, newRefreshToken]);
   res.json({ message: 'Access token refreshed' });
-};
+});
+
+// Request password reset
+export const forgotPassword = asyncHandler(async (req, res, next) => {
+  const { email } = req.body;
+
+  if (!isValidEmail(email)) {
+    return next(errorHandler(400, 'Invalid email address'));
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    // We don't want to reveal whether a user exists or not
+    return res.status(200).json({
+      message:
+        'If a user with that email exists, a password reset link has been sent.',
+    });
+  }
+
+  const resetToken = generateToken(user._id, '1h');
+  user.resetPasswordToken = resetToken;
+  user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+  await user.save();
+
+  const resetURL = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+  try {
+    await sendPasswordResetEmail(user.email, resetURL);
+    res.status(200).json({ message: 'Password reset email sent' });
+  } catch (error) {
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+    return next(errorHandler(500, 'Error sending password reset email'));
+  }
+});
+
+// Reset password
+export const resetPassword = asyncHandler(async (req, res, next) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) {
+    return next(errorHandler(400, 'Missing required fields'));
+  }
+
+  if (!isStrongPassword(newPassword)) {
+    return next(errorHandler(400, 'Password not strong enough'));
+  }
+
+  const decoded = verifyToken(token);
+  if (!decoded) {
+    return next(errorHandler(400, 'Invalid or expired token'));
+  }
+
+  const user = await User.findOne({
+    _id: decoded.userId,
+    resetPasswordToken: token,
+    resetPasswordExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return next(errorHandler(400, 'Invalid or expired token'));
+  }
+
+  user.password = newPassword;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
+
+  res.status(200).json({ message: 'Password has been reset successfully' });
+});
+
+// Validate reset token
+export const validateResetToken = asyncHandler(async (req, res, next) => {
+  const { token } = req.params;
+
+  if (!token) {
+    return next(errorHandler(400, 'Token is required'));
+  }
+
+  const decoded = verifyToken(token);
+  if (!decoded) {
+    return next(errorHandler(400, 'Invalid or expired token'));
+  }
+
+  const user = await User.findOne({
+    _id: decoded.userId,
+    resetPasswordToken: token,
+    resetPasswordExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return next(errorHandler(400, 'Invalid or expired token'));
+  }
+
+  res.status(200).json({ message: 'Token is valid' });
+});

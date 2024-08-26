@@ -50,3 +50,15 @@ export const verifyRefreshToken = async (req) => {
     return null;
   }
 };
+
+export const generateToken = (userId, expiresIn) => {
+  return jwt.sign({ userId }, process.env.JWT_ACCESS_SECRET, { expiresIn });
+};
+
+export const verifyToken = (token) => {
+  try {
+    return jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+  } catch (error) {
+    return null;
+  }
+};
