@@ -2,15 +2,16 @@ import jwt from 'jsonwebtoken';
 import { serialize } from 'cookie';
 import User from '../models/user.js';
 
-export const generateAccessToken = (userId) => {
-  const token = jwt.sign({ userId }, process.env.JWT_ACCESS_SECRET, {
+export const generateAccessToken = (user) => {
+  const token = jwt.sign({ userId: user._id }, process.env.JWT_ACCESS_SECRET, {
     expiresIn: '15m',
   });
   return serialize('accessToken', token, {
     httpOnly: true,
     maxAge: 15 * 60, // 15 minutes
     sameSite: 'none',
-    secure: process.env.NODE_ENV === 'production',
+    // secure: process.env.NODE_ENV === 'production',
+    secure: true,
   });
 };
 
@@ -24,7 +25,8 @@ export const generateRefreshToken = async (user) => {
     httpOnly: true,
     maxAge: 7 * 24 * 60 * 60, // 7 days
     sameSite: 'none',
-    secure: process.env.NODE_ENV === 'production',
+    // secure: process.env.NODE_ENV === 'production',
+    secure: true,
   });
 };
 

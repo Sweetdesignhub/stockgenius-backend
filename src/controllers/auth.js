@@ -256,6 +256,7 @@ export const validateResetToken = async (req, res, next) => {
 
 export const logout = async (req, res, next) => {
   const refreshToken = req.cookies.refreshToken;
+  console.log({ refreshToken });
 
   if (refreshToken) {
     // Find the user with this refresh token and remove it
