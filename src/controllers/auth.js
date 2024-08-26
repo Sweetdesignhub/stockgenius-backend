@@ -20,7 +20,7 @@ import {
   isValidPhoneNumber,
 } from '../utils/validators.js';
 
-export const signup = asyncHandler(async (req, res, next) => {
+export const signup = async (req, res, next) => {
   const { email, name, password, phoneNumber, country, state } = req.body;
 
   if (!isValidEmail(email)) {
@@ -71,9 +71,9 @@ export const signup = asyncHandler(async (req, res, next) => {
   res
     .status(201)
     .json({ message: 'User created. Please verify your email and phone.' });
-});
+};
 
-export const verifyEmail = asyncHandler(async (req, res, next) => {
+export const verifyEmail = async (req, res, next) => {
   const { email, otp } = req.body;
 
   const user = await User.findOne({ email });
@@ -94,9 +94,9 @@ export const verifyEmail = asyncHandler(async (req, res, next) => {
   await user.save();
 
   res.json({ message: 'Email verified successfully' });
-});
+};
 
-export const verifyPhone = asyncHandler(async (req, res, next) => {
+export const verifyPhone = async (req, res, next) => {
   const { phoneNumber, otp } = req.body;
 
   const user = await User.findOne({ phoneNumber });
@@ -122,9 +122,9 @@ export const verifyPhone = asyncHandler(async (req, res, next) => {
 
   res.setHeader('Set-Cookie', [accessToken, refreshToken]);
   res.json({ message: 'Phone number verified successfully' });
-});
+};
 
-export const login = asyncHandler(async (req, res, next) => {
+export const login = async (req, res, next) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
@@ -142,9 +142,9 @@ export const login = asyncHandler(async (req, res, next) => {
 
   res.setHeader('Set-Cookie', [accessToken, refreshToken]);
   res.json({ data: user, message: 'Login successful' });
-});
+};
 
-export const refreshToken = asyncHandler(async (req, res, next) => {
+export const refreshToken = async (req, res, next) => {
   const payload = await verifyRefreshToken(req);
   if (!payload) {
     return next(errorHandler(401, 'Invalid refresh token'));
@@ -156,10 +156,10 @@ export const refreshToken = asyncHandler(async (req, res, next) => {
 
   res.setHeader('Set-Cookie', [accessToken, newRefreshToken]);
   res.json({ message: 'Access token refreshed' });
-});
+};
 
 // Request password reset
-export const forgotPassword = asyncHandler(async (req, res, next) => {
+export const forgotPassword = async (req, res, next) => {
   const { email } = req.body;
 
   if (!isValidEmail(email)) {
@@ -191,10 +191,10 @@ export const forgotPassword = asyncHandler(async (req, res, next) => {
     await user.save();
     return next(errorHandler(500, 'Error sending password reset email'));
   }
-});
+};
 
 // Reset password
-export const resetPassword = asyncHandler(async (req, res, next) => {
+export const resetPassword = async (req, res, next) => {
   const { token, newPassword } = req.body;
 
   if (!token || !newPassword) {
@@ -226,10 +226,10 @@ export const resetPassword = asyncHandler(async (req, res, next) => {
   await user.save();
 
   res.status(200).json({ message: 'Password has been reset successfully' });
-});
+};
 
 // Validate reset token
-export const validateResetToken = asyncHandler(async (req, res, next) => {
+export const validateResetToken = async (req, res, next) => {
   const { token } = req.params;
 
   if (!token) {
@@ -252,4 +252,4 @@ export const validateResetToken = asyncHandler(async (req, res, next) => {
   }
 
   res.status(200).json({ message: 'Token is valid' });
-});
+};

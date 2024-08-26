@@ -5,6 +5,9 @@ import {
   verifyPhone,
   login,
   refreshToken,
+  forgotPassword,
+  resetPassword,
+  validateResetToken,
 } from '../controllers/auth.js';
 import { validateRequest } from '../middlewares/validateRequest.js';
 import {
@@ -31,6 +34,9 @@ router
     validateRequest,
     asyncHandler(verifyPhone)
   )
-  .post('/login', validateLogin, validateRequest, asyncHandler(login));
+  .post('/login', validateLogin, validateRequest, asyncHandler(login))
+  .post('/forgot-password', asyncHandler(forgotPassword))
+  .post('/reset-password', asyncHandler(resetPassword))
+  .get('/validate-reset-token/:token', asyncHandler(validateResetToken));
 
 export default router;
