@@ -26,6 +26,8 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
     refreshToken: { type: String },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
     fyersUserDetails: { type: Schema.Types.ObjectId, ref: 'FyersUserDetail' },
   },
   { timestamps: true }
