@@ -304,12 +304,12 @@ export const activateAutoTradeBot = async (req, res) => {
       }
 
       const currentTime = getCurrentTime();
-      if (currentTime < "09:30" || currentTime > "16:30") {
+      if (currentTime < "09:15" || currentTime > "15:30") {
         user.autoTradeBot = "inactive";
         await user.save();
         clearInterval(user.loopIntervalId);
         console.log(
-          "Auto trading can only be activated between 9:30 AM and 4:30 PM"
+          "Auto trading can only be activated between 9:15 AM and 3:30 PM"
         );
         return;
       }
