@@ -8,6 +8,7 @@ import {
   forgotPassword,
   resetPassword,
   validateResetToken,
+  logout,
 } from '../controllers/auth.js';
 import { validateRequest } from '../middlewares/validateRequest.js';
 import {
@@ -17,6 +18,7 @@ import {
   validatePhoneVerification,
 } from '../utils/validationRules.js';
 import asyncHandler from '../utils/asyncHandler.js';
+import { verifyUser } from '../middlewares/verifyUser.js';
 
 const router = Router();
 
@@ -37,6 +39,7 @@ router
   .post('/login', validateLogin, validateRequest, asyncHandler(login))
   .post('/forgot-password', asyncHandler(forgotPassword))
   .post('/reset-password', asyncHandler(resetPassword))
-  .get('/validate-reset-token/:token', asyncHandler(validateResetToken));
+  .get('/validate-reset-token/:token', asyncHandler(validateResetToken))
+  .post('/sign-out', verifyUser, asyncHandler(logout));
 
 export default router;

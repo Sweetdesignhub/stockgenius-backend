@@ -253,3 +253,21 @@ export const validateResetToken = async (req, res, next) => {
 
   res.status(200).json({ message: 'Token is valid' });
 };
+
+export const logout = async (req, res, next) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (refreshToken) {
+    // Find the user with this refresh token and remove it
+    await User.findOneAndUpdate(
+      { refreshToken },
+      { $unset: { refreshToken: 1 } }
+    );
+  }
+
+  // Clear the cookies
+  res.clearCookie('accessToken');
+  res.clearCookie('refreshToken');
+
+  res.status(200).json({ message: 'Logged out successfully' });
+};
