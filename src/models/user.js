@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema(
@@ -11,10 +11,22 @@ const userSchema = new mongoose.Schema(
     state: { type: String, required: true },
     isEmailVerified: { type: Boolean, default: false },
     isPhoneVerified: { type: Boolean, default: false },
+    avatar: {
+      type: String,
+      default:
+        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRAd5avdba8EiOZH8lmV3XshrXx7dKRZvhx-A&s',
+    },
     emailOTP: { type: String },
     phoneOTP: { type: String },
     otpExpiry: { type: Date },
+    autoTradeBot: {
+      type: String,
+      enum: ['active', 'running', 'inactive', 'stopped'],
+      default: 'inactive',
+      required: true,
+    },
     refreshToken: { type: String },
+    fyersUserDetails: { type: Schema.Types.ObjectId, ref: 'FyersUserDetail' },
   },
   { timestamps: true }
 );
