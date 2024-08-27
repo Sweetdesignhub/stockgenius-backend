@@ -18,6 +18,7 @@ const userSchema = new mongoose.Schema(
     },
     emailOTP: { type: String },
     phoneOTP: { type: String },
+    loginOTP: { type: String },
     otpExpiry: { type: Date },
     autoTradeBot: {
       type: String,

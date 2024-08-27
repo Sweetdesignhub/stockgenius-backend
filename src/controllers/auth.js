@@ -12,7 +12,6 @@ import {
   verifyRefreshToken,
   verifyToken,
 } from '../services/tokenService.js';
-import asyncHandler from '../utils/asyncHandler.js';
 import { errorHandler } from '../utils/errorHandler.js';
 import {
   isStrongPassword,
@@ -125,17 +124,83 @@ export const verifyPhone = async (req, res, next) => {
 };
 
 export const login = async (req, res, next) => {
-  const { email, password } = req.body;
+  const { identifier, password, useOTP } = req.body;
 
-  const user = await User.findOne({ email });
+  // Check if the identifier is an email or phone number
+  const isEmail = isValidEmail(identifier);
+  const isPhone = isValidPhoneNumber(identifier);
 
-  if (!user || !(await user.comparePassword(password))) {
-    return next(errorHandler(401, 'Invalid credentials'));
+  if (!isEmail && !isPhone) {
+    return next(errorHandler(400, 'Invalid email or phone number'));
+  }
+
+  const user = await User.findOne(
+    isEmail ? { email: identifier } : { phoneNumber: identifier }
+  );
+
+  if (!user) {
+    return next(errorHandler(401, 'User not found'));
   }
 
   if (!user.isEmailVerified || !user.isPhoneVerified) {
     return next(errorHandler(403, 'Account not fully verified'));
   }
+
+  if (useOTP) {
+    // Generate and send OTP
+    const otp = generateOTP();
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    user.loginOTP = otp;
+    user.otpExpiry = otpExpiry;
+    await user.save();
+
+    if (isEmail) {
+      await sendEmailOTP(identifier, otp);
+    } else {
+      await sendPhoneOTP(identifier, otp);
+    }
+
+    return res.json({ message: 'OTP sent for login verification' });
+  } else {
+    // Password-based login
+    if (!password) {
+      return next(errorHandler(400, 'Password is required'));
+    }
+
+    if (!(await user.comparePassword(password))) {
+      return next(errorHandler(401, 'Invalid credentials'));
+    }
+
+    const accessToken = generateAccessToken(user);
+    const refreshToken = await generateRefreshToken(user);
+
+    res.setHeader('Set-Cookie', [accessToken, refreshToken]);
+    res.json({ data: user, message: 'Login successful' });
+  }
+};
+
+// New function to verify OTP for login
+export const verifyLoginOTP = async (req, res, next) => {
+  const { identifier, otp } = req.body;
+
+  const isEmail = isValidEmail(identifier);
+  const user = await User.findOne(
+    isEmail ? { email: identifier } : { phoneNumber: identifier }
+  );
+
+  if (!user) {
+    return next(errorHandler(404, 'User not found'));
+  }
+
+  if (!isOTPValid(user.loginOTP, otp, user.otpExpiry)) {
+    return next(errorHandler(400, 'Invalid or expired OTP'));
+  }
+
+  // Clear the OTP fields
+  user.loginOTP = undefined;
+  user.otpExpiry = undefined;
+  await user.save();
 
   const accessToken = generateAccessToken(user);
   const refreshToken = await generateRefreshToken(user);
@@ -256,7 +321,6 @@ export const validateResetToken = async (req, res, next) => {
 
 export const logout = async (req, res, next) => {
   const refreshToken = req.cookies.refreshToken;
-  console.log({ refreshToken });
 
   if (refreshToken) {
     // Find the user with this refresh token and remove it

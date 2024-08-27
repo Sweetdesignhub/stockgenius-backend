@@ -9,6 +9,7 @@ import {
   resetPassword,
   validateResetToken,
   logout,
+  verifyLoginOTP,
 } from '../controllers/auth.js';
 import { validateRequest } from '../middlewares/validateRequest.js';
 import {
@@ -16,6 +17,11 @@ import {
   validateSignup,
   validateEmailVerification,
   validatePhoneVerification,
+  verifyOTPValidation,
+  validateForgotPassword,
+  validateResetPassword,
+  validateResetToken as resetTokenValidation,
+  validateRefreshToken,
 } from '../utils/validationRules.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { verifyUser } from '../middlewares/verifyUser.js';
@@ -37,9 +43,36 @@ router
     asyncHandler(verifyPhone)
   )
   .post('/login', validateLogin, validateRequest, asyncHandler(login))
-  .post('/forgot-password', asyncHandler(forgotPassword))
-  .post('/reset-password', asyncHandler(resetPassword))
-  .get('/validate-reset-token/:token', asyncHandler(validateResetToken))
+  .post(
+    '/verify-login-otp',
+    verifyOTPValidation,
+    validateRequest,
+    asyncHandler(verifyLoginOTP)
+  )
+  .post(
+    '/forgot-password',
+    validateForgotPassword,
+    validateRequest,
+    asyncHandler(forgotPassword)
+  )
+  .post(
+    '/reset-password',
+    validateResetPassword,
+    validateRequest,
+    asyncHandler(resetPassword)
+  )
+  .get(
+    '/validate-reset-token/:token',
+    resetTokenValidation,
+    validateRequest,
+    asyncHandler(validateResetToken)
+  )
+  .post(
+    '/refresh-token',
+    validateRefreshToken,
+    validateRequest,
+    asyncHandler(refreshToken)
+  )
   .post('/sign-out', verifyUser, asyncHandler(logout));
 
 export default router;
