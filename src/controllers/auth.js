@@ -2,6 +2,7 @@ import User from '../models/user.js';
 import {
   sendEmailOTP,
   sendPasswordResetEmail,
+  sendWelcomeEmail,
 } from '../services/emailService.js';
 import { generateOTP, isOTPValid } from '../services/otpService.js';
 import { sendPhoneOTP } from '../services/phoneService.js';
@@ -115,6 +116,8 @@ export const verifyPhone = async (req, res, next) => {
   user.phoneOTP = undefined;
   user.otpExpiry = undefined;
   await user.save();
+
+  await sendWelcomeEmail(user);
 
   const accessToken = generateAccessToken(user);
   const refreshToken = await generateRefreshToken(user);
