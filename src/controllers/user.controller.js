@@ -15,7 +15,8 @@ export const updateUser = async (req, res, next) => {
   if (!req.user) {
     return next(errorHandler(401, 'Authentication required'));
   }
-  if (req.user.id !== req.params.id)
+  console.log(req.user, req.params.id);
+  if (req.user.userId !== req.params.id)
     return next(errorHandler(401, 'You can only update your own account!'));
   try {
     if (req.body.password) {
@@ -44,7 +45,7 @@ export const updateUser = async (req, res, next) => {
 };
 
 export const deleteUser = async (req, res, next) => {
-  if (req.user.id !== req.params.id)
+  if (req.user.userId !== req.params.id)
     return next(errorHandler(401, 'You can only delete your own account!'));
   try {
     await User.findByIdAndDelete(req.params.id);

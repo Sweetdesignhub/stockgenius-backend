@@ -10,6 +10,7 @@ export const generateAccessToken = (user) => {
     httpOnly: true,
     maxAge: 15 * 60, // 15 minutes
     sameSite: 'none',
+    path: '/',
     // secure: process.env.NODE_ENV === 'production',
     secure: true,
   });
@@ -25,6 +26,7 @@ export const generateRefreshToken = async (user) => {
     httpOnly: true,
     maxAge: 7 * 24 * 60 * 60, // 7 days
     sameSite: 'none',
+    path: '/',
     // secure: process.env.NODE_ENV === 'production',
     secure: true,
   });
