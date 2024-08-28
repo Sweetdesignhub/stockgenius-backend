@@ -48,7 +48,7 @@ app.use((req, res, next) => {
 });
 
 // Routes declaration
-app.use('/api', apiLimiter);
+// app.use('/api', apiLimiter);
 
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/auth', authRoutes);
