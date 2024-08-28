@@ -317,21 +317,6 @@ export const activateAutoTradeBot = async (req, res) => {
       const accessToken = fyersUserDetails.accessToken;
 
       try {
-        // const fundsResponse = await axios.get(
-        //   `https://api.stockgenius.ai/api/v1/fyers/fundsByUserId/${userId}`
-        // );
-
-        // const funds = fundsResponse.data;
-
-        // const isFundsValid = checkFunds(funds);
-
-        // if (!isFundsValid) {
-        //   user.autoTradeBot = "inactive";
-        //   await user.save();
-        //   clearInterval(user.loopIntervalId);
-        //   console.log("Insufficient funds");
-        //   return;
-        // }
 
         user.autoTradeBot = "running";
         await user.save();
@@ -372,6 +357,7 @@ export const activateAutoTradeBot = async (req, res) => {
           userId,
           marginProfit,
           marginLoss,
+          accessToken
         });
 
         if (response.data && Array.isArray(response.data)) {
