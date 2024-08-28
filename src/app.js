@@ -6,17 +6,18 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { apiLimiter } from './middlewares/rateLimiter.js';
-
 // import routes
+import schedule from 'node-schedule';
 import userRoutes from './routes/user.route.js';
 // import authRoutes from './routes/auth.route.js';
 import fyersRoutes from './routes/brokers/fyers/fyers.route.js';
 import authRoutes from './routes/auth.js';
+import { sendOrderPDF } from './utils/sendOrderPDF.js';
 
 dotenv.config();
 
 const app = express();
-
+const url = process.env.BASE_URL + '/api/v1/fyers/fetchOrders';
 app.use(helmet());
 // app.use(cors());
 app.use(morgan('dev'));
@@ -68,5 +69,9 @@ app.use(errorHandler);
 //     statusCode,
 //   });
 // });
+
+schedule.scheduleJob('*/2 * * * *', function () {
+  sendOrderPDF();
+});
 
 export { app };
