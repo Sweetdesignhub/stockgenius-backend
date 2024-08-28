@@ -1,10 +1,10 @@
 /**
  * Checks if the available balance is greater than the specified amount.
  * @param {Object} funds - The funds data.
- * @param {number} [minBalance=1000] - The minimum balance required.
+ * @param {number} [minBalance=100] - The minimum balance required.
  * @returns {boolean} - Returns true if the balance is sufficient, otherwise false.
  */
-export function checkFunds(funds, minBalance = 1000) {
+export function checkFunds(funds, minBalance = 100) {
   const availableBalance = funds.fund_limit.find(fund => fund.title === 'Available Balance');
   return availableBalance && availableBalance.equityAmount > minBalance;
 }

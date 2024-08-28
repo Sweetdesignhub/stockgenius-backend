@@ -70,8 +70,8 @@ app.use(errorHandler);
 //   });
 // });
 
-schedule.scheduleJob('*/2 * * * *', function () {
-  sendOrderPDF();
-});
+// schedule.scheduleJob('*/2 * * * *', function () {
+//   sendOrderPDF();
+// });
 
 export { app };

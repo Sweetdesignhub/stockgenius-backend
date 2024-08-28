@@ -20,13 +20,9 @@ const router = express.Router();
 router.get('/generateAuthCodeUrl/:userId', verifyUser, generateAuthCodeUrl);
 router.post('/generateAccessToken/:userId', verifyUser, generateAccessToken);
 router.post('/fetchProfileAndSave/:userId', verifyUser, fetchProfileAndSave);
-router.post('/fetchFundsAndSave/:userId', verifyUser, fetchFundsAndSave);
+router.post('/fetchFundsAndSave/:userId', fetchFundsAndSave);
 router.post('/fetchHoldingsAndSave/:userId', verifyUser, fetchHoldingsAndSave);
-router.post(
-  '/fetchPositionsAndSave/:userId',
-  verifyUser,
-  fetchPositionsAndSave
-);
+router.post('/fetchPositionsAndSave/:userId', fetchPositionsAndSave);
 router.post('/fetchTradesAndSave/:userId', verifyUser, fetchTradesAndSave);
 router.post('/fetchOrdersAndSave/:userId', verifyUser, fetchOrdersAndSave);
 router.post('/placeOrder/:userId', verifyUser, placeOrder);

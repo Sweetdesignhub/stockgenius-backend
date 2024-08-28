@@ -31,6 +31,7 @@ const updateFyersUserDetails = async (userId, updateData) => {
 export const generateAuthCodeUrl = async (req, res) => {
   try {
     const { userId } = req.params;
+    console.log(APPID);
     if (!userId) {
       return res.status(400).json({ error: 'User ID is required' });
     }
@@ -424,7 +425,7 @@ export const placeMultipleOrders = async (req, res) => {
       const unsuccessfulOrders = [];
 
       response.data.forEach((orderResponse, index) => {
-        if (orderResponse.statusCode === 200 && orderResponse.body.s === 'ok') {
+        if (orderResponse.statusCode === 200 && orderResponse.body.s === "ok") {
           successfulOrders.push({
             orderIndex: index,
             ...orderResponse.body,
