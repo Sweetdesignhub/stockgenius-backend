@@ -6,17 +6,17 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { apiLimiter } from './middlewares/rateLimiter.js';
-
 // import routes
 import userRoutes from './routes/user.route.js';
 // import authRoutes from './routes/auth.route.js';
 import fyersRoutes from './routes/brokers/fyers/fyers.route.js';
 import authRoutes from './routes/auth.js';
+import startReportScheduler from './utils/orderReportGenerator.js';
 
 dotenv.config();
 
 const app = express();
-
+const url = process.env.BASE_URL + '/api/v1/fyers/fetchOrders';
 app.use(helmet());
 // app.use(cors());
 app.use(morgan('dev'));
@@ -55,18 +55,6 @@ app.use('/api/v1/fyers', fyersRoutes);
 
 app.use(errorHandler);
 
-// Error handling middleware
-// app.use((err, req, res, next) => {
-//   const statusCode = err.statusCode || 500;
-//   const message = err.message || 'Internal Server Error';
-
-//   console.error(`[${new Date().toISOString()}] ${message}`);
-
-//   res.status(statusCode).json({
-//     success: false,
-//     message,
-//     statusCode,
-//   });
-// });
+startReportScheduler();
 
 export { app };

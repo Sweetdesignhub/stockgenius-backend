@@ -1,11 +1,11 @@
-import { fyersModel } from "fyers-api-v3";
-import fs from "fs";
-import dotenv from "dotenv";
-import FyersUserDetail from "../../../models/brokers/fyers/fyersUserDetail.model.js";
-import { validateOrder } from "../../../utils/validateOrder.js";
+import { fyersModel } from 'fyers-api-v3';
+import fs from 'fs';
+import dotenv from 'dotenv';
+import FyersUserDetail from '../../../models/brokers/fyers/fyersUserDetail.model.js';
+import { validateOrder } from '../../../utils/validateOrder.js';
 
 dotenv.config();
-const logsDir = "./logs";
+const logsDir = './logs';
 if (!fs.existsSync(logsDir)) {
   fs.mkdirSync(logsDir);
 }
@@ -33,7 +33,7 @@ export const generateAuthCodeUrl = async (req, res) => {
     const { userId } = req.params;
     console.log(APPID);
     if (!userId) {
-      return res.status(400).json({ error: "User ID is required" });
+      return res.status(400).json({ error: 'User ID is required' });
     }
 
     const authCodeURL = fyers.generateAuthCode();
@@ -41,7 +41,7 @@ export const generateAuthCodeUrl = async (req, res) => {
 
     res.json({ authCodeURL });
   } catch (error) {
-    console.error("Error generating auth code URL:", error);
+    console.error('Error generating auth code URL:', error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -51,23 +51,23 @@ export const generateAccessToken = async (req, res) => {
     const { userId } = req.params;
     const { uri } = req.body;
     if (!userId || !uri) {
-      return res.status(400).json({ error: "User ID and URI are required" });
+      return res.status(400).json({ error: 'User ID and URI are required' });
     }
 
     const urlParams = new URLSearchParams(uri);
-    const authCode = urlParams.get("auth_code");
+    const authCode = urlParams.get('auth_code');
     if (!authCode) {
-      return res.status(400).json({ error: "Auth code not found in URI" });
+      return res.status(400).json({ error: 'Auth code not found in URI' });
     }
 
     const response = await fyers.generate_access_token({
       client_id: APPID,
       secret_key: SECRET_KEY,
       auth_code: authCode,
-      grant_type: "authorization_code",
+      grant_type: 'authorization_code',
     });
 
-    if (response.s === "ok") {
+    if (response.s === 'ok') {
       const { access_token: accessToken, refresh_token: refreshToken } =
         response;
       await updateFyersUserDetails(userId, {
@@ -81,7 +81,7 @@ export const generateAccessToken = async (req, res) => {
       res.status(400).json({ error: response });
     }
   } catch (error) {
-    console.error("Error generating access token:", error);
+    console.error('Error generating access token:', error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -93,13 +93,13 @@ export const fetchProfileAndSave = async (req, res) => {
     if (!userId || !accessToken) {
       return res
         .status(400)
-        .json({ error: "User ID and Access Token are required" });
+        .json({ error: 'User ID and Access Token are required' });
     }
 
     fyers.setAccessToken(accessToken);
     const response = await fyers.get_profile();
 
-    if (response.s === "ok") {
+    if (response.s === 'ok') {
       const {
         fy_id: fyersId,
         name,
@@ -123,7 +123,7 @@ export const fetchProfileAndSave = async (req, res) => {
       res.status(400).json({ error: response });
     }
   } catch (error) {
-    console.error("Error fetching profile:", error);
+    console.error('Error fetching profile:', error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -134,25 +134,25 @@ export const fetchFundsAndSave = async (req, res) => {
     const { accessToken } = req.body;
 
     if (!userId) {
-      return res.status(400).json({ error: "User ID is required" });
+      return res.status(400).json({ error: 'User ID is required' });
     }
 
     if (!accessToken) {
-      return res.status(400).json({ error: "Access token is required" });
+      return res.status(400).json({ error: 'Access token is required' });
     }
 
     fyers.setAccessToken(accessToken);
     const response = await fyers.get_funds();
     // console.log("funds:", response.fund_limit);
 
-    if (response.s === "ok") {
+    if (response.s === 'ok') {
       const funds = response.fund_limit;
       // console.log("Funds data to save:", funds);
 
       // Save funds data to the database
       await FyersUserDetail.findOneAndUpdate(
         { userId },
-        { $set: { "funds.fund_limit": funds } },
+        { $set: { 'funds.fund_limit': funds } },
         { new: true, upsert: true }
       );
 
@@ -161,7 +161,7 @@ export const fetchFundsAndSave = async (req, res) => {
       res.status(400).json({ error: response });
     }
   } catch (error) {
-    console.error("Error fetching funds:", error);
+    console.error('Error fetching funds:', error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -172,23 +172,23 @@ export const fetchOrdersAndSave = async (req, res) => {
     const { accessToken } = req.body;
 
     if (!userId) {
-      return res.status(400).json({ error: "User ID is required" });
+      return res.status(400).json({ error: 'User ID is required' });
     }
 
     if (!accessToken) {
-      return res.status(400).json({ error: "Access token is required" });
+      return res.status(400).json({ error: 'Access token is required' });
     }
 
     fyers.setAccessToken(accessToken);
     const response = await fyers.get_orders();
 
-    if (response.s === "ok") {
+    if (response.s === 'ok') {
       const orders = response.orderBook;
 
       // Ensure the 'orders' field in the schema is an array
       await FyersUserDetail.findOneAndUpdate(
         { userId },
-        { $set: { "orders.orderBook": orders } },
+        { $set: { 'orders.orderBook': orders } },
         { new: true, upsert: true }
       );
 
@@ -197,8 +197,27 @@ export const fetchOrdersAndSave = async (req, res) => {
       res.status(400).json({ error: response });
     }
   } catch (error) {
-    console.error("Error fetching orders:", error);
+    console.error('Error fetching orders:', error);
     res.status(500).json({ error: error.message });
+  }
+};
+
+export const fetchOrders = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+    const userDetails = await FyersUserDetail.findOne({ userId }).exec();
+
+    if (!userDetails) {
+      return res.status(404).json({ error: 'User details not found' });
+    }
+    res.json({ orders: userDetails.orders });
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 
@@ -208,18 +227,18 @@ export const fetchHoldingsAndSave = async (req, res) => {
     const { accessToken } = req.body;
 
     if (!userId) {
-      return res.status(400).json({ error: "User ID is required" });
+      return res.status(400).json({ error: 'User ID is required' });
     }
 
     if (!accessToken) {
-      return res.status(400).json({ error: "Access token is required" });
+      return res.status(400).json({ error: 'Access token is required' });
     }
 
     fyers.setAccessToken(accessToken);
     const response = await fyers.get_holdings();
 
     // Check if the response is successful
-    if (response.s === "ok") {
+    if (response.s === 'ok') {
       const { overall, holdings } = response; // Destructure overall and holdings from the response
 
       // Save holdings data to the database
@@ -227,8 +246,8 @@ export const fetchHoldingsAndSave = async (req, res) => {
         { userId },
         {
           $set: {
-            "holdings.overall": overall, // Update overall holdings data
-            "holdings.holdings": holdings, // Update individual holding items
+            'holdings.overall': overall, // Update overall holdings data
+            'holdings.holdings': holdings, // Update individual holding items
           },
         },
         { new: true, upsert: true }
@@ -239,7 +258,7 @@ export const fetchHoldingsAndSave = async (req, res) => {
       res.status(400).json({ error: response }); //  error responses from the API
     }
   } catch (error) {
-    console.error("Error fetching holdings:", error);
+    console.error('Error fetching holdings:', error);
     res.status(500).json({ error: error.message }); // server errors
   }
 };
@@ -250,18 +269,18 @@ export const fetchPositionsAndSave = async (req, res) => {
     const { accessToken } = req.body;
 
     if (!userId) {
-      return res.status(400).json({ error: "User ID is required" });
+      return res.status(400).json({ error: 'User ID is required' });
     }
 
     if (!accessToken) {
-      return res.status(400).json({ error: "Access token is required" });
+      return res.status(400).json({ error: 'Access token is required' });
     }
 
     fyers.setAccessToken(accessToken);
     const response = await fyers.get_positions();
     // console.log("Positions:", response.netPositions);
 
-    if (response.s === "ok") {
+    if (response.s === 'ok') {
       const positions = {
         netPositions: response.netPositions,
         overall: response.overall,
@@ -280,7 +299,7 @@ export const fetchPositionsAndSave = async (req, res) => {
       res.status(400).json({ error: response });
     }
   } catch (error) {
-    console.error("Error fetching positions:", error);
+    console.error('Error fetching positions:', error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -291,22 +310,22 @@ export const fetchTradesAndSave = async (req, res) => {
     const { accessToken } = req.body;
 
     if (!userId) {
-      return res.status(400).json({ error: "User ID is required" });
+      return res.status(400).json({ error: 'User ID is required' });
     }
 
     if (!accessToken) {
-      return res.status(400).json({ error: "Access token is required" });
+      return res.status(400).json({ error: 'Access token is required' });
     }
 
     fyers.setAccessToken(accessToken);
     const response = await fyers.get_tradebook();
 
-    if (response.s === "ok") {
+    if (response.s === 'ok') {
       const trades = response.tradeBook;
 
       await FyersUserDetail.findOneAndUpdate(
         { userId },
-        { $set: { "trades.tradeBook": trades } },
+        { $set: { 'trades.tradeBook': trades } },
         { new: true, upsert: true }
       );
 
@@ -315,7 +334,7 @@ export const fetchTradesAndSave = async (req, res) => {
       res.status(400).json({ error: response });
     }
   } catch (error) {
-    console.error("Error fetching trades:", error);
+    console.error('Error fetching trades:', error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -327,21 +346,21 @@ export const placeOrder = async (req, res) => {
 
   // Validate inputs
   if (!userId) {
-    return res.status(400).json({ error: "User ID is required" });
+    return res.status(400).json({ error: 'User ID is required' });
   }
   if (!accessToken) {
-    return res.status(400).json({ error: "Access token is required" });
+    return res.status(400).json({ error: 'Access token is required' });
   }
-  if (!order || typeof order !== "object") {
+  if (!order || typeof order !== 'object') {
     return res
       .status(400)
-      .json({ error: "Order details are required and should be an object" });
+      .json({ error: 'Order details are required and should be an object' });
   }
 
   // Validate order details
   const { isValid, errors } = validateOrder(order);
   if (!isValid) {
-    console.log("Order validation failed:", errors);
+    console.log('Order validation failed:', errors);
     return res.status(400).json({ errors });
   }
 
@@ -352,14 +371,14 @@ export const placeOrder = async (req, res) => {
     const response = await fyers.place_order(order);
     // console.log("Order placed response:", response);
 
-    if (response.s === "ok") {
+    if (response.s === 'ok') {
       return res.json(response);
     } else {
       return res.status(400).json({ error: response });
     }
   } catch (error) {
-    console.error("Error placing order:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    console.error('Error placing order:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };
 
@@ -373,13 +392,13 @@ export const placeMultipleOrders = async (req, res) => {
   // console.log("place order" , accessToken, orders);
 
   // Validate inputs
-  if (!userId) return res.status(400).json({ error: "User ID is required" });
+  if (!userId) return res.status(400).json({ error: 'User ID is required' });
   if (!accessToken)
-    return res.status(400).json({ error: "Access token is required" });
+    return res.status(400).json({ error: 'Access token is required' });
   if (!orders || !Array.isArray(orders) || orders.length === 0)
     return res
       .status(400)
-      .json({ error: "Orders array is required and should not be empty" });
+      .json({ error: 'Orders array is required and should not be empty' });
 
   try {
     // Set the access token for Fyers API
@@ -401,7 +420,7 @@ export const placeMultipleOrders = async (req, res) => {
     // console.log('placeorder response : ', response);
 
     // Check if the response is successful
-    if (response.s === "ok") {
+    if (response.s === 'ok') {
       const successfulOrders = [];
       const unsuccessfulOrders = [];
 
@@ -420,23 +439,23 @@ export const placeMultipleOrders = async (req, res) => {
       });
 
       return res.json({
-        message: "Order placement result",
+        message: 'Order placement result',
         successfulOrders,
         unsuccessfulOrders,
       });
     } else {
-      console.log("Error response details:", response);
+      console.log('Error response details:', response);
       const errors = response.data.map((orderResponse, index) => ({
         orderIndex: index,
         ...orderResponse.body,
       }));
       return res
         .status(400)
-        .json({ error: "Order placement failed", details: errors });
+        .json({ error: 'Order placement failed', details: errors });
     }
   } catch (error) {
-    console.error("Error placing multiple orders:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    console.error('Error placing multiple orders:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };
 
