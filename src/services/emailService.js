@@ -24,8 +24,8 @@ export const sendEmailOTP = async (email, otp) => {
     from: process.env.EMAIL_FROM,
     to: email,
     subject: 'Your OTP for Email Verification',
-    text: `Your OTP for AI StockScope is ${otp}. It will expire in 10 minutes.`,
-    html: `<p>Your OTP for AI StockScope is <strong>${otp}</strong>. It will expire in 10 minutes.</p>`,
+    text: `Your OTP for StockGenius is ${otp}. It will expire in 10 minutes.`,
+    html: `<p>Your OTP for StockGenius is <strong>${otp}</strong>. It will expire in 10 minutes.</p>`,
   };
 
   await sendEmail(mailOptions);
@@ -52,11 +52,11 @@ export const sendWelcomeEmail = async (user) => {
   const mailOptions = {
     from: process.env.EMAIL_FROM,
     to: user.email,
-    subject: 'Welcome to AI StockScope!',
+    subject: 'Welcome to StockGenius!',
     text: `
       Dear ${user.name},
 
-      Welcome to AI StockScope! We're thrilled to have you on board.
+      Welcome to StockGenius! We're thrilled to have you on board.
 
       Your account has been successfully created and you're now part of our community of savvy investors leveraging AI for smarter stock market decisions.
 
@@ -68,7 +68,7 @@ export const sendWelcomeEmail = async (user) => {
       If you have any questions or need assistance, our support team is always here to help.
 
       Best regards,
-      The AI StockScope Team
+      The StockGenius Team
     `,
     html: `
       <!DOCTYPE html>
@@ -76,7 +76,7 @@ export const sendWelcomeEmail = async (user) => {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Welcome to AI StockScope</title>
+        <title>Welcome to StockGenius</title>
         <style>
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -86,7 +86,7 @@ export const sendWelcomeEmail = async (user) => {
       </head>
       <body>
         <div class="container">
-          <h1>Welcome to AI StockScope!</h1>
+          <h1>Welcome to StockGenius!</h1>
           <p>Dear ${user.name},</p>
           <p>We're thrilled to have you on board. Your account has been successfully created and you're now part of our community of savvy investors leveraging AI for smarter stock market decisions.</p>
           <h2>Here's what you can do next:</h2>
@@ -101,7 +101,7 @@ export const sendWelcomeEmail = async (user) => {
           <p>If you have any questions or need assistance, our support team is always here to help.</p>
           <p>
             Best regards,<br>
-            The AI StockScope Team
+            The StockGenius Team
           </p>
         </div>
       </body>
