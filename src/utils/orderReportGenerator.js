@@ -135,9 +135,9 @@ async function generateAndSendReport() {
 }
 
 const startReportScheduler = () => {
-  cron.schedule('*/1 * * * *', generateAndSendReport);
+  cron.schedule('0 16 * * *', generateAndSendReport);
   console.log(
-    'Report scheduler started. Reports will be generated and sent every 2 minutes.'
+    'Report scheduler started. Reports will be generated and sent daily at 4:00 PM.'
   );
 };
 
