@@ -12,7 +12,7 @@ import userRoutes from './routes/user.route.js';
 // import authRoutes from './routes/auth.route.js';
 import fyersRoutes from './routes/brokers/fyers/fyers.route.js';
 import authRoutes from './routes/auth.js';
-import { sendOrderPDF } from './utils/sendOrderPDF.js';
+import startReportScheduler from './utils/orderReportGenerator.js';
 
 dotenv.config();
 
@@ -56,22 +56,6 @@ app.use('/api/v1/fyers', fyersRoutes);
 
 app.use(errorHandler);
 
-// Error handling middleware
-// app.use((err, req, res, next) => {
-//   const statusCode = err.statusCode || 500;
-//   const message = err.message || 'Internal Server Error';
-
-//   console.error(`[${new Date().toISOString()}] ${message}`);
-
-//   res.status(statusCode).json({
-//     success: false,
-//     message,
-//     statusCode,
-//   });
-// });
-
-// schedule.scheduleJob('*/2 * * * *', function () {
-//   sendOrderPDF();
-// });
+startReportScheduler();
 
 export { app };

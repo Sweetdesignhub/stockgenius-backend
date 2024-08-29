@@ -112,15 +112,15 @@ export const sendWelcomeEmail = async (user) => {
   await sendEmail(mailOptions);
 };
 
-export const sendDailyTradesReport = async (recipientEmail, filePath) => {
+export const sendDailyTradesReport = async (filePath, recipientEmail) => {
   const mailOptions = {
     from: process.env.EMAIL_FROM,
     to: recipientEmail,
-    subject: 'Daily Trades Report',
-    text: 'Attached is the daily trades report.',
+    subject: 'Daily Order Report',
+    text: 'Please find attached the daily order report',
     attachments: [
       {
-        filename: 'output.pdf',
+        filename: 'order_report.pdf',
         path: filePath,
       },
     ],
