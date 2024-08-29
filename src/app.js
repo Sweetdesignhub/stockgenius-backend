@@ -7,7 +7,6 @@ import morgan from 'morgan';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { apiLimiter } from './middlewares/rateLimiter.js';
 // import routes
-import schedule from 'node-schedule';
 import userRoutes from './routes/user.route.js';
 // import authRoutes from './routes/auth.route.js';
 import fyersRoutes from './routes/brokers/fyers/fyers.route.js';
