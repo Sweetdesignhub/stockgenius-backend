@@ -10,6 +10,7 @@ import {
   validateResetToken,
   logout,
   verifyLoginOTP,
+  googleAuth,
 } from '../controllers/auth.js';
 import { validateRequest } from '../middlewares/validateRequest.js';
 import {
@@ -43,6 +44,7 @@ router
     asyncHandler(verifyPhone)
   )
   .post('/login', validateLogin, validateRequest, asyncHandler(login))
+  .post('/google-auth', asyncHandler(googleAuth))
   .post(
     '/verify-login-otp',
     verifyOTPValidation,
