@@ -19,6 +19,9 @@ import {
   isValidEmail,
   isValidPhoneNumber,
 } from '../utils/validators.js';
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const signup = async (req, res, next) => {
   const { email, name, password, phoneNumber, country, state } = req.body;
@@ -71,6 +74,51 @@ export const signup = async (req, res, next) => {
   res
     .status(201)
     .json({ message: 'User created. Please verify your email and phone.' });
+};
+
+export const googleAuth = async (req, res, next) => {
+  const { token } = req.body;
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = new User({
+        email,
+        name,
+        avatar: picture,
+        isEmailVerified: true,
+        isPhoneVerified: false,
+      });
+
+      await user.save();
+    }
+
+    if (!user.isPhoneVerified) {
+      return res.status(200).json({
+        message: 'Phone verification required',
+        userId: user._id,
+        requiresPhoneVerification: true,
+      });
+    }
+
+    // User is fully verified, proceed with login
+    const accessToken = generateAccessToken(user);
+    const refreshToken = await generateRefreshToken(user);
+
+    res.setHeader('Set-Cookie', [accessToken, refreshToken]);
+    res.json({ data: user, message: 'Google authentication successful' });
+  } catch (error) {
+    return next(errorHandler(401, 'Invalid Google token'));
+  }
 };
 
 export const verifyEmail = async (req, res, next) => {
