@@ -9,6 +9,7 @@ import {
   resetPassword,
   validateResetToken,
   logout,
+  googleUpdateUser,
   verifyLoginOTP,
   googleAuth,
 } from '../controllers/auth.js';
@@ -56,6 +57,10 @@ router
     validateForgotPassword,
     validateRequest,
     asyncHandler(forgotPassword)
+  )
+  .patch(
+    '/update-google-auth/:id',
+    asyncHandler(googleUpdateUser)
   )
   .post(
     '/reset-password',
