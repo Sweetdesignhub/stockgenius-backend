@@ -15,6 +15,7 @@ const FyersUserDetailSchema = new Schema({
     index: true
   },
   profile: {
+    broker:{type:String,default:"Fyers"},
     fy_id: { type: String,  },
     name: { type: String },
     image: { type: String, default: null },

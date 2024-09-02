@@ -130,7 +130,7 @@ export const login = async (req, res, next) => {
   const { identifier, password, useOTP } = req.body;
 
   // Check if the identifier is an email or phone number
-  const isEmail = isValidEmail(identifier);
+  const isEmail = isValidEmail(identifier); 
   const isPhone = isValidPhoneNumber(identifier);
 
   if (!isEmail && !isPhone) {

@@ -20,7 +20,13 @@ const userSchema = new mongoose.Schema(
     phoneOTP: { type: String },
     loginOTP: { type: String },
     otpExpiry: { type: Date },
-    autoTradeBot: {
+    autoTradeBotINTRADAY: {
+      type: String,
+      enum: ['active', 'running', 'inactive', 'stopped'],
+      default: 'inactive',
+      required: true,
+    },
+    autoTradeBotCNC: {
       type: String,
       enum: ['active', 'running', 'inactive', 'stopped'],
       default: 'inactive',

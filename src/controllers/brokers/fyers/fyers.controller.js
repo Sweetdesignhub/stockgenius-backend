@@ -459,239 +459,40 @@ export const placeMultipleOrders = async (req, res) => {
   }
 };
 
-// // API to place a single order with proper validations
-// export const placeOrder = async (req, res) => {
-//   const orderDetails = req.body;
+export const exitPosition = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { accessToken, positionId } = req.body;
 
-//   // Validate required fields
-//   const requiredFields = [
-//     "symbol",
-//     "qty",
-//     "type",
-//     "side",
-//     "productType",
-//     "limitPrice",
-//     "stopPrice",
-//     "disclosedQty",
-//     "validity",
-//     "offlineOrder",
-//     "stopLoss",
-//     "takeProfit",
-//     "orderTag",
-//   ];
-//   for (const field of requiredFields) {
-//     if (!orderDetails.hasOwnProperty(field)) {
-//       return res.status(400).json({ error: `${field} is required` });
-//     }
-//   }
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
 
-//   // Validate field types and values
-//   if (typeof orderDetails.symbol !== "string") {
-//     return res.status(400).json({ error: "symbol must be a string" });
-//   }
+    if (!accessToken) {
+      return res.status(400).json({ error: "Access token is required" });
+    }
 
-//   if (typeof orderDetails.qty !== "number" || orderDetails.qty <= 0) {
-//     return res.status(400).json({ error: "qty must be a positive number" });
-//   }
+    if (!positionId) {
+      return res.status(400).json({ error: "Position ID is required" });
+    }
 
-//   if (![1, 2, 3, 4].includes(orderDetails.type)) {
-//     return res.status(400).json({ error: "type must be one of 1, 2, 3, 4" });
-//   }
+    // Set Fyers credentials dynamically
+    fyers.setAccessToken(accessToken);
 
-//   if (![1, -1].includes(orderDetails.side)) {
-//     return res.status(400).json({ error: "side must be one of 1, -1" });
-//   }
+    // Prepare the request body with the position ID
+    const reqBody = { id: positionId };
 
-//   const validProductTypes = ["CNC", "INTRADAY", "MARGIN", "CO", "BO"];
-//   if (!validProductTypes.includes(orderDetails.productType)) {
-//     return res.status(400).json({
-//       error: `productType must be one of ${validProductTypes.join(", ")}`,
-//     });
-//   }
+    // Exit the position using Fyers API
+    const response = await fyers.exit_position(reqBody);
 
-//   if (
-//     typeof orderDetails.limitPrice !== "number" ||
-//     orderDetails.limitPrice < 0
-//   ) {
-//     return res
-//       .status(400)
-//       .json({ error: "limitPrice must be a non-negative number" });
-//   }
-
-//   if (
-//     typeof orderDetails.stopPrice !== "number" ||
-//     orderDetails.stopPrice < 0
-//   ) {
-//     return res
-//       .status(400)
-//       .json({ error: "stopPrice must be a non-negative number" });
-//   }
-
-//   if (
-//     typeof orderDetails.disclosedQty !== "number" ||
-//     orderDetails.disclosedQty < 0
-//   ) {
-//     return res
-//       .status(400)
-//       .json({ error: "disclosedQty must be a non-negative number" });
-//   }
-
-//   if (!["DAY", "IOC"].includes(orderDetails.validity)) {
-//     return res.status(400).json({ error: "validity must be one of DAY, IOC" });
-//   }
-
-//   if (typeof orderDetails.offlineOrder !== "boolean") {
-//     return res.status(400).json({ error: "offlineOrder must be a boolean" });
-//   }
-
-//   if (typeof orderDetails.stopLoss !== "number" || orderDetails.stopLoss < 0) {
-//     return res
-//       .status(400)
-//       .json({ error: "stopLoss must be a non-negative number" });
-//   }
-
-//   if (
-//     typeof orderDetails.takeProfit !== "number" ||
-//     orderDetails.takeProfit < 0
-//   ) {
-//     return res
-//       .status(400)
-//       .json({ error: "takeProfit must be a non-negative number" });
-//   }
-
-//   if (typeof orderDetails.orderTag !== "string") {
-//     return res.status(400).json({ error: "orderTag must be a string" });
-//   }
-
-//   try {
-//     const fyersAccessToken = req.headers.authorization.split(" ")[1];
-//     fyers.setAccessToken(fyersAccessToken);
-//     const response = await fyers.place_order(orderDetails);
-//     res.json(response);
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
-
-// // API to place multiple orders with proper validations
-// export const placeMultipleOrders = async (req, res) => {
-//   const ordersDetails = req.body;
-
-//   // Check if ordersDetails is an array
-//   if (!Array.isArray(ordersDetails)) {
-//     return res
-//       .status(400)
-//       .json({ error: "Request body must be an array of order details" });
-//   }
-
-//   // Validate each order in the array
-//   for (let i = 0; i < ordersDetails.length; i++) {
-//     const order = ordersDetails[i];
-//     const requiredFields = [
-//       "symbol",
-//       "qty",
-//       "type",
-//       "side",
-//       "productType",
-//       "limitPrice",
-//       "stopPrice",
-//       "disclosedQty",
-//       "validity",
-//       "offlineOrder",
-//       "stopLoss",
-//       "takeProfit",
-//     ];
-//     for (const field of requiredFields) {
-//       if (!order.hasOwnProperty(field)) {
-//         return res
-//           .status(400)
-//           .json({ error: `${field} is required for order at index ${i}` });
-//       }
-//     }
-
-//     // Validate field types and values
-//     if (typeof order.symbol !== "string") {
-//       return res
-//         .status(400)
-//         .json({ error: `symbol for order at index ${i} must be a string` });
-//     }
-
-//     if (typeof order.qty !== "number" || order.qty <= 0) {
-//       return res.status(400).json({
-//         error: `qty for order at index ${i} must be a positive number`,
-//       });
-//     }
-
-//     if (![1, 2, 3, 4].includes(order.type)) {
-//       return res.status(400).json({
-//         error: `type for order at index ${i} must be one of 1, 2, 3, 4`,
-//       });
-//     }
-
-//     if (![1, -1].includes(order.side)) {
-//       return res
-//         .status(400)
-//         .json({ error: `side for order at index ${i} must be one of 1, -1` });
-//     }
-
-//     const validProductTypes = ["CNC", "INTRADAY", "MARGIN", "CO", "BO"];
-//     if (!validProductTypes.includes(order.productType)) {
-//       return res.status(400).json({
-//         error: `productType for order at index ${i} must be one of ${validProductTypes.join(
-//           ", "
-//         )}`,
-//       });
-//     }
-
-//     if (typeof order.limitPrice !== "number" || order.limitPrice < 0) {
-//       return res.status(400).json({
-//         error: `limitPrice for order at index ${i} must be a non-negative number`,
-//       });
-//     }
-
-//     if (typeof order.stopPrice !== "number" || order.stopPrice < 0) {
-//       return res.status(400).json({
-//         error: `stopPrice for order at index ${i} must be a non-negative number`,
-//       });
-//     }
-
-//     if (typeof order.disclosedQty !== "number" || order.disclosedQty < 0) {
-//       return res.status(400).json({
-//         error: `disclosedQty for order at index ${i} must be a non-negative number`,
-//       });
-//     }
-
-//     if (!["DAY", "IOC"].includes(order.validity)) {
-//       return res.status(400).json({
-//         error: `validity for order at index ${i} must be one of DAY, IOC`,
-//       });
-//     }
-
-//     if (typeof order.offlineOrder !== "boolean") {
-//       return res.status(400).json({
-//         error: `offlineOrder for order at index ${i} must be a boolean`,
-//       });
-//     }
-
-//     if (typeof order.stopLoss !== "number" || order.stopLoss < 0) {
-//       return res.status(400).json({
-//         error: `stopLoss for order at index ${i} must be a non-negative number`,
-//       });
-//     }
-
-//     if (typeof order.takeProfit !== "number" || order.takeProfit < 0) {
-//       return res.status(400).json({
-//         error: `takeProfit for order at index ${i} must be a non-negative number`,
-//       });
-//     }
-//   }
-
-//   try {
-//     const fyersAccessToken = req.headers.authorization.split(" ")[1];
-//     fyers.setAccessToken(fyersAccessToken);
-//     const response = await fyers.place_multi_order(ordersDetails);
-//     res.json(response);
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
+    // Handle the response
+    if (response.s === 'ok' && response.code === 200) {
+      res.status(200).json({ message: response.message });
+    } else {
+      res.status(400).json({ error: response.message || "Failed to exit position" });
+    }
+  } catch (error) {
+    console.error("Error exiting position:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

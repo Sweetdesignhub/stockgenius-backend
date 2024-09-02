@@ -127,3 +127,26 @@ export const sendDailyTradesReport = async (filePath, recipientEmail) => {
   };
   await sendEmail(mailOptions);
 };
+
+export const sendCoreEngineEmail = async () => {
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: ["singharshdeep9039@gmail.com","manisaikumar321@gmail.com"], // admin email or notification email
+    subject: 'Python Server Stopped',
+    text: `
+      Dear Admin,
+
+      The Python server for StockGenius has stopped due to an internal error. Please investigate the issue.
+
+      Best regards,
+      StockGenius Team
+    `,
+    html: `
+      <p>Dear Admin,</p>
+      <p>The Python server for StockGenius has stopped due to an internal error. Please investigate the issue.</p>
+      <p>Best regards,<br>AI StockGenius Team</p>
+    `,
+  };
+
+  await sendEmail(mailOptions);
+};

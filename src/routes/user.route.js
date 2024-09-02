@@ -2,9 +2,11 @@ import { Router } from 'express';
 import {
   updateUser,
   deleteUser,
-  activateAutoTradeBot,
-  deactivateAutoTradeBot,
   fetchAllUsersWithAutoTradeBot,
+  activateAutoTradeBotINTRADAY,
+  activateAutoTradeBotCNC,
+  deactivateAutoTradeBotINTRADAY,
+  deactivateAutoTradeBotCNC,
 } from '../controllers/user.controller.js';
 import { verifyUser } from '../middlewares/verifyUser.js';
 
@@ -14,13 +16,18 @@ router.post('/update/:id', verifyUser, updateUser);
 router.delete('/delete/:id', verifyUser, deleteUser);
 
 // Route to activate auto trade bot for a user
-router.post('/auto-trade-bot/activate/:userId', activateAutoTradeBot);
+router.post('/auto-trade-bot-INTRADAY/activate/:userId', activateAutoTradeBotINTRADAY);
+router.post('/auto-trade-bot-CNC/activate/:userId', activateAutoTradeBotCNC);
 
 // Route to deactivate auto trade bot for a user
 router.patch(
-  '/auto-trade-bot/deactivate/:userId',
-  verifyUser,
-  deactivateAutoTradeBot
+  '/auto-trade-bot-INTRADAY/deactivate/:userId',
+  deactivateAutoTradeBotINTRADAY
+);
+// Route to deactivate auto trade bot for a user
+router.patch(
+  '/auto-trade-bot-CNC/deactivate/:userId',
+  deactivateAutoTradeBotCNC
 );
 
 // get all user with auto trade activated
