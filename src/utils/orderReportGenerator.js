@@ -4,17 +4,16 @@ import FyersUserDetail from '../models/brokers/fyers/fyersUserDetail.model.js';
 import cron from 'node-cron';
 import { sendDailyTradesReport } from '../services/emailService.js';
 
-// Function to generate the PDF
 const generatePDF = (orders) => {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ margin: 30, size: 'A4' });
+    const doc = new PDFDocument({ margin: 50, size: 'A4' });
     const pdfPath = './Trade Details.pdf';
     const stream = fs.createWriteStream(pdfPath);
 
     doc.pipe(stream);
 
     // Add title
-    doc.fontSize(14).text('Capital Market:', { align: 'left' });
+    doc.fontSize(16).text('Capital Market Trade Details', { align: 'center' });
     doc.moveDown();
 
     // Define table structure
@@ -24,7 +23,7 @@ const generatePDF = (orders) => {
         'TM Name',
         'ClientCode',
         'Buy/Sell',
-        'Name of the Security',
+        'Name of Security',
         'Symbol',
         'Series',
         'Trade No',
@@ -33,14 +32,9 @@ const generatePDF = (orders) => {
         'Price(Rs.)',
         'Traded Value(Rs.)',
       ],
-      rows: [],
-    };
-
-    // Populate table rows
-    orders.forEach((order, index) => {
-      table.rows.push([
+      rows: orders.map((order, index) => [
         index + 1,
-        'FYERS SECURITIESPRIVATE LIMITED',
+        'FYERS SECURITIES PRIVATE LIMITED',
         order.clientId,
         order.side === 1 ? 'B' : 'S',
         order.description,
@@ -56,52 +50,57 @@ const generatePDF = (orders) => {
         order.qty,
         order.limitPrice.toFixed(2),
         (order.limitPrice * order.qty).toFixed(2),
-      ]);
-    });
+      ]),
+    };
 
-    // Define column widths (adjust as needed to fit your page)
-    const colWidths = [30, 70, 50, 40, 80, 60, 40, 80, 60, 50, 50, 70];
+    // Calculate column widths
+    const colWidths = [25, 70, 50, 30, 70, 50, 30, 60, 50, 40, 50, 60];
     const tableWidth = colWidths.reduce((sum, width) => sum + width, 0);
     const startX = (doc.page.width - tableWidth) / 2;
 
-    // Draw table header
-    let yPos = doc.y;
-    table.headers.forEach((header, i) => {
+    // Helper function to draw a cell
+    const drawCell = (text, x, y, width, height, isHeader = false) => {
+      doc.rect(x, y, width, height).stroke();
       doc
-        .font('Helvetica-Bold')
-        .fontSize(8)
-        .text(
-          header,
-          startX + colWidths.slice(0, i).reduce((sum, width) => sum + width, 0),
-          yPos,
-          {
-            width: colWidths[i],
-            align: 'left',
-          }
-        );
-    });
+        .font(isHeader ? 'Helvetica-Bold' : 'Helvetica')
+        .fontSize(isHeader ? 8 : 7)
+        .text(text, x + 2, y + 2, {
+          width: width - 4,
+          height: height - 4,
+          align: 'left',
+          valign: 'center',
+        });
+    };
 
-    // Draw table rows
-    yPos += 20;
-    table.rows.forEach((row, rowIndex) => {
-      row.forEach((cell, cellIndex) => {
-        doc
-          .font('Helvetica')
-          .fontSize(8)
-          .text(
-            cell.toString(),
-            startX +
-              colWidths
-                .slice(0, cellIndex)
-                .reduce((sum, width) => sum + width, 0),
-            yPos,
-            {
-              width: colWidths[cellIndex],
-              align: 'left',
-            }
-          );
+    // Draw table
+    let yPos = doc.y;
+    const rowHeight = 20;
+
+    // Draw header
+    table.headers.forEach((header, i) => {
+      drawCell(
+        header,
+        startX + colWidths.slice(0, i).reduce((sum, w) => sum + w, 0),
+        yPos,
+        colWidths[i],
+        rowHeight,
+        true
+      );
+    });
+    yPos += rowHeight;
+
+    // Draw rows
+    table.rows.forEach((row) => {
+      row.forEach((cell, i) => {
+        drawCell(
+          cell.toString(),
+          startX + colWidths.slice(0, i).reduce((sum, w) => sum + w, 0),
+          yPos,
+          colWidths[i],
+          rowHeight
+        );
       });
-      yPos += 20;
+      yPos += rowHeight;
 
       // Add a new page if we're near the bottom
       if (yPos > doc.page.height - 50) {
@@ -117,6 +116,7 @@ const generatePDF = (orders) => {
   });
 };
 
+// The rest of the code remains the same
 async function generateAndSendReport() {
   try {
     const users = await FyersUserDetail.find({});
@@ -127,7 +127,6 @@ async function generateAndSendReport() {
         fs.unlinkSync(pdfPath);
       }
     }
-
     console.log('Daily reports sent successfully');
   } catch (error) {
     console.error('Error generating and sending reports:', error);

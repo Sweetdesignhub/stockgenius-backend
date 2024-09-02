@@ -9,7 +9,9 @@ import {
   resetPassword,
   validateResetToken,
   logout,
+  googleUpdateUser,
   verifyLoginOTP,
+  googleAuth,
 } from '../controllers/auth.js';
 import { validateRequest } from '../middlewares/validateRequest.js';
 import {
@@ -43,6 +45,7 @@ router
     asyncHandler(verifyPhone)
   )
   .post('/login', validateLogin, validateRequest, asyncHandler(login))
+  .post('/google-auth', asyncHandler(googleAuth))
   .post(
     '/verify-login-otp',
     verifyOTPValidation,
@@ -54,6 +57,10 @@ router
     validateForgotPassword,
     validateRequest,
     asyncHandler(forgotPassword)
+  )
+  .patch(
+    '/update-google-auth/:id',
+    asyncHandler(googleUpdateUser)
   )
   .post(
     '/reset-password',

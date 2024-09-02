@@ -1,3 +1,4 @@
+import { ConversationPage } from 'twilio/lib/rest/conversations/v1/conversation.js';
 import User from '../models/user.js';
 import {
   sendEmailOTP,
@@ -19,6 +20,9 @@ import {
   isValidEmail,
   isValidPhoneNumber,
 } from '../utils/validators.js';
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const signup = async (req, res, next) => {
   const { email, name, password, phoneNumber, country, state } = req.body;
@@ -73,6 +77,97 @@ export const signup = async (req, res, next) => {
     .json({ message: 'User created. Please verify your email and phone.' });
 };
 
+export const googleAuth = async (req, res, next) => {
+  const { token, country, state } = req.body;
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    console.log(payload);
+    const { email, name, picture } = payload;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      const randomPassword = Math.random().toString(36).slice(-8);
+
+      user = new User({
+        email,
+        name,
+        avatar: picture,
+        isEmailVerified: true,
+        isPhoneVerified: false,
+        password: randomPassword,
+        phoneNumber: 'Pending',
+        country: country || 'Pending',
+        state: state || 'Pending',
+      });
+
+      try {
+        await user.save();
+      } catch (saveError) {
+        console.error('Error saving new user:', saveError);
+        return next(
+          errorHandler(400, 'Error creating new user: ' + saveError.message)
+        );
+      }
+    }
+
+    if (!user.isPhoneVerified || user.phoneNumber === 'Pending') {
+      return res.status(200).json({
+        message: 'Additional information required',
+        userId: user._id,
+        requiresAdditionalInfo: true,
+      });
+    }
+
+    // User is fully verified, proceed with login
+    const accessToken = generateAccessToken(user);
+    const refreshToken = await generateRefreshToken(user);
+
+    res.setHeader('Set-Cookie', [accessToken, refreshToken]);
+    res.json({ data: user, message: 'Google authentication successful' });
+  } catch (error) {
+    console.error('Google Auth Error:', error);
+    return next(
+      errorHandler(401, 'Error during Google authentication: ' + error.message)
+    );
+  }
+};
+
+export const googleUpdateUser = async (req, res, next) => {
+  console.log(req.body);
+  try {
+    const phoneOTP = generateOTP();
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id, // This should be the ID from the URL parameters
+      {
+        $set: {
+          phoneNumber: req.body.phoneNumber,
+          state: req.body.state,
+          country: req.body.country,
+          phoneOTP: phoneOTP,
+          otpExpiry: otpExpiry,
+        },
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+    await sendPhoneOTP(req.body.phoneNumber, phoneOTP);
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const verifyEmail = async (req, res, next) => {
   const { email, otp } = req.body;
 
@@ -98,7 +193,6 @@ export const verifyEmail = async (req, res, next) => {
 
 export const verifyPhone = async (req, res, next) => {
   const { phoneNumber, otp } = req.body;
-
   const user = await User.findOne({ phoneNumber });
   if (!user) {
     return next(errorHandler(404, 'User not found'));
