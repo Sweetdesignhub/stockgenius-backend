@@ -16,8 +16,8 @@ const transporter = nodemailer.createTransport({
   port: 465,
   secure: true, // Use SSL
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: "info@stockgenius.ai",
+    pass: "Stockgeniusai@2024@",
   },
   logger: true, // Enable logging
   debug: true,  // Include debug information in the logs
@@ -37,7 +37,7 @@ const sendEmail = async (options) => {
 
 export const sendEmailOTP = async (email, otp) => {
   const mailOptions = {
-    from: process.env.EMAIL_FROM,
+    from: "info@stockgenius.ai",
     to: email,
     subject: 'Your OTP for Email Verification',
     text: `Your OTP for StockGenius is ${otp}. It will expire in 10 minutes.`,
@@ -49,7 +49,7 @@ export const sendEmailOTP = async (email, otp) => {
 
 export const sendPasswordResetEmail = async (email, resetURL) => {
   const mailOptions = {
-    from: process.env.EMAIL_FROM,
+    from: "info@stockgenius.ai",
     to: email,
     subject: 'Password Reset Request',
     text: `Please use the following link to reset your password: ${resetURL}. This link will expire in 1 hour.`,
@@ -66,7 +66,7 @@ export const sendPasswordResetEmail = async (email, resetURL) => {
 
 export const sendWelcomeEmail = async (user) => {
   const mailOptions = {
-    from: process.env.EMAIL_FROM,
+    from: "info@stockgenius.ai",
     to: user.email,
     subject: 'Welcome to StockGenius!',
     text: `
@@ -130,7 +130,7 @@ export const sendWelcomeEmail = async (user) => {
 
 export const sendDailyTradesReport = async (filePath, recipientEmail) => {
   const mailOptions = {
-    from: process.env.EMAIL_FROM,
+    from: "info@stockgenius.ai",
     to: recipientEmail,
     subject: 'Daily Order Report',
     text: 'Please find attached the daily order report',
@@ -146,7 +146,7 @@ export const sendDailyTradesReport = async (filePath, recipientEmail) => {
 
 export const sendCoreEngineEmail = async () => {
   const mailOptions = {
-    from: process.env.EMAIL_FROM,
+    from: "info@stockgenius.ai",
     to: ["singharshdeep9039@gmail.com","manisaikumar321@gmail.com"], // admin email or notification email
     subject: 'Python Server Stopped',
     text: `
