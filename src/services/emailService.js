@@ -1,20 +1,36 @@
 import nodemailer from 'nodemailer';
 
+// const transporter = nodemailer.createTransport({
+//   host: 'smtp.gmail.com',
+//   port: 587,
+//   secure: false,
+//   auth: {
+//     user: "itnanda1987@gmail.com",
+//     pass: "jdlt yozr luhj qqzo",
+//   },
+// });
+
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
+  name: "hostgator",
+  host: "gator2101.hostgator.com",
+  port: 465,
+  secure: true, // Use SSL
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  logger: true, // Enable logging
+  debug: true,  // Include debug information in the logs
 });
+
 
 const sendEmail = async (options) => {
   try {
     const info = await transporter.sendMail(options);
     return info;
   } catch (error) {
+    console.error('Error sending email:', error);
+    
     throw new Error('Failed to send email');
   }
 };
