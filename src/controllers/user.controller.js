@@ -539,8 +539,8 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
       clearInterval(activeIntervals.intraday[userId]);
     }
 
-    activeIntervals.intraday[userId] = setInterval(autoTradeLoop, 15 * 1000);
-    console.log("Auto-trade loop started with interval of 15 seconds");
+    activeIntervals.intraday[userId] = setInterval(autoTradeLoop, 25 * 1000);
+    console.log("Auto-trade loop started with interval of 25 seconds");
 
     await autoTradeLoop();
 
@@ -864,11 +864,19 @@ export const deactivateAutoTradeBotCNC = async (req, res) => {
 };
 
 
-// export const deactivateAutoTradeBot = async (req, res) => {
-//   const { userId } = req.params;
+//new logic
 
-//   if (!userId) {
-//     return res.status(400).json({ message: "User ID is required" });
+// export const activateAutoTradeBotINTRADAY = async (req, res) => {
+//   const { userId } = req.params;
+//   const { marginProfitPercentage, marginLossPercentage } = req.body;
+
+//   const marginProfit = parseFloat(marginProfitPercentage);
+//   const marginLoss = parseFloat(marginLossPercentage);
+
+//   if (!userId || isNaN(marginProfit) || isNaN(marginLoss)) {
+//     return res
+//       .status(400)
+//       .json({ message: "Missing or invalid required parameters" });
 //   }
 
 //   try {
@@ -877,27 +885,224 @@ export const deactivateAutoTradeBotCNC = async (req, res) => {
 //       return res.status(404).json({ message: "User not found" });
 //     }
 
-//     console.log("Stopping auto-trade bot for user:", userId);
-
-//     user.autoTradeBot = "stopped";
-//     await user.save();
-
-//     if (activeIntervals[userId]) {
-//       // console.log("Clearing interval ID:", activeIntervals[userId]);
-//       clearInterval(activeIntervals[userId]);
-//       delete activeIntervals[userId];
+//     const fyersUserDetails = await FyersUserDetail.findOne({ userId });
+//     if (!fyersUserDetails || !fyersUserDetails.accessToken) {
+//       return res.status(404).json({
+//         message: "Fyers user details not found or access token missing",
+//       });
 //     }
 
-//     console.log("Auto-trade bot deactivated and interval cleared");
+//     // Set the bot status to 'active'
+//     user.autoTradeBotINTRADAY = "active";
+//     await user.save();
 
-//     return res.status(200).json({ message: "Auto trade bot deactivated" });
+//     const autoTradeLoop = async () => {
+//       try {
+//         while (true) {
+//           // Fetch the updated user status in each iteration
+//           const updatedUser = await User.findById(userId);
+
+//           // Stop the loop if the bot status is not 'active'
+//           if (updatedUser.autoTradeBotINTRADAY !== "active") {
+//             console.log(
+//               "Auto-trade loop stopped due to status:",
+//               updatedUser.autoTradeBotINTRADAY
+//             );
+//             return; // Stop the loop
+//           }
+
+//           // Check time condition
+//           const currentTime = getCurrentTime();
+//           if (
+//             currentTime < TIME_CONDITION_START ||
+//             currentTime > TIME_CONDITION_END
+//           ) {
+//             updatedUser.autoTradeBotINTRADAY = "inactive";
+//             await updatedUser.save();
+//             console.log(
+//               "Auto trading can only be activated between 9:15 AM and 3:30 PM"
+//             );
+//             return; // Stop the loop
+//           }
+
+//           updatedUser.autoTradeBotINTRADAY = "running";
+//           await updatedUser.save();
+
+//           const accessToken = fyersUserDetails.accessToken;
+
+//           // Fetch positions and save
+//           const positionAndSaveUrl = `https://api.stockgenius.ai/api/v1/fyers/fetchPositionsAndSave/${userId}`;
+//           const positionAndSaveResponse = await axios.post(positionAndSaveUrl, {
+//             accessToken,
+//           });
+
+//           if (positionAndSaveResponse.status !== 200) {
+//             throw new Error("Failed to fetch and save positions");
+//           }
+
+//           console.log(
+//             "Position and save successful:",
+//             positionAndSaveResponse.data
+//           );
+
+//           // Fetch funds
+//           const fundsUrl = `https://api.stockgenius.ai/api/v1/fyers/fetchFundsAndSave/${userId}`;
+//           const fundsResponse = await axios.post(fundsUrl, { accessToken });
+
+//           if (fundsResponse.status !== 200) {
+//             throw new Error("Failed to fetch funds data");
+//           }
+
+//           console.log("Funds fetched successfully:", fundsResponse.data);
+
+//           // Call the Python server
+//           const pythonServerUrl =
+//             "http://ec2-13-232-40-122.ap-south-1.compute.amazonaws.com:8000/autoTradingActivated_INTRADAY";
+//           const response = await axios.post(pythonServerUrl, {
+//             userId,
+//             marginProfit,
+//             marginLoss,
+//             accessToken,
+//           });
+
+//           if (response.data && Array.isArray(response.data)) {
+//             const decisions = response.data[0].decision;
+//             const reinvestmentData = response.data[1].reinvestment;
+
+//             console.log("decisions:", decisions);
+//             console.log("reinvestmentData:", reinvestmentData);
+
+//             const combinedData = [
+//               ...decisions
+//                 .filter((decision) => decision.Decision !== "Hold")
+//                 .map((decision) => ({
+//                   symbol: decision.Symbol,
+//                   qty: decision.Quantity,
+//                   type: 2,
+//                   side: decision.Decision === "Sell" ? -1 : 1,
+//                   productType: "INTRADAY",
+//                   limitPrice: 0,
+//                   stopPrice: 0,
+//                   disclosedQty: 0,
+//                   validity: "DAY",
+//                   offlineOrder: false,
+//                   stopLoss: 0,
+//                   takeProfit: 0,
+//                   orderTag: "autotrade",
+//                 })),
+//               ...reinvestmentData.map((reinvestment) => ({
+//                 symbol: reinvestment.Symbol,
+//                 qty: reinvestment.Quantity,
+//                 type: 2,
+//                 side: 1,
+//                 productType: "INTRADAY",
+//                 limitPrice: 0,
+//                 stopPrice: 0,
+//                 disclosedQty: 0,
+//                 validity: "DAY",
+//                 offlineOrder: false,
+//                 stopLoss: 0,
+//                 takeProfit: 0,
+//                 orderTag: "autotrade",
+//               })),
+//             ];
+
+//             // Validate orders
+//             const validatedOrders = combinedData
+//               .map((order, index) => {
+//                 const { isValid, errors } = validateOrder(order);
+//                 if (!isValid) {
+//                   console.log(
+//                     `Order validation failed at index ${index}:`,
+//                     errors
+//                   );
+//                   return null;
+//                 }
+//                 return order;
+//               })
+//               .filter((order) => order !== null);
+
+//             console.log("Validated Orders:", validatedOrders);
+//             console.log("Total validated orders:", validatedOrders.length);
+
+//             const chunkSize = 10;
+//             const orderChunks = chunkArray(validatedOrders, chunkSize);
+
+//             for (const chunk of orderChunks) {
+//               console.log("Placing orders:", chunk);
+
+//               try {
+//                 // const placeOrderResponse = await axios.post(
+//                 //   `https://api.stockgenius.ai/api/v1/fyers/placeMultipleOrders/${userId}`,
+//                 //   { accessToken, orders: chunk }
+//                 // );
+//                 // const { successfulOrders = [], unsuccessfulOrders = [] } =
+//                 //   placeOrderResponse.data;
+//                 // if (successfulOrders.length > 0) {
+//                 //   console.log("Successful orders:", successfulOrders);
+//                 // }
+//                 // if (unsuccessfulOrders.length > 0) {
+//                 //   console.log("Failed orders:", unsuccessfulOrders);
+//                 // }
+//               } catch (error) {
+//                 console.error("Error placing orders:", error);
+//                 throw error;
+//               }
+//             }
+
+//             updatedUser.autoTradeBotINTRADAY = "active";
+//             await updatedUser.save();
+
+//             console.log(
+//               "Orders placed successfully, auto trade bot set to active"
+//             );
+//           } else {
+//             console.error("Unexpected response format:", response.data);
+//           }
+
+//           // Wait before the next iteration
+//         }
+//       } catch (error) {
+//         console.error("Error in auto trade loop:", error);
+//         const user = await User.findById(userId);
+//         if (user) {
+//           user.autoTradeBotINTRADAY = "inactive";
+//           await user.save();
+//         }
+//         await sendCoreEngineEmail();
+//       }
+//     };
+
+//     await autoTradeLoop(); // Start the loop
+
+//     return res.status(200).json({ message: "Auto trade bot activated for Intraday" });
 //   } catch (error) {
-//     console.error("Error deactivating auto trade bot:", error);
-//     return res
-//       .status(500)
-//       .json({ message: "Server error", error: error.message });
+//     console.error("Error activating auto trade bot:", error);
+//     return res.status(500).json({ message: "Server error", error: error.message });
 //   }
 // };
+
+// export const deactivateAutoTradeBotINTRADAY = async (req, res) => {
+//   const { userId } = req.params;
+
+//   try {
+//     const user = await User.findById(userId);
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     // Stop the bot and update the status in the database
+//     user.autoTradeBotINTRADAY = "stopped";
+//     await user.save();
+
+//     return res.status(200).json({ message: "Intraday auto trade bot deactivated" });
+//   } catch (error) {
+//     console.error("Error deactivating Intraday bot:", error);
+//     return res.status(500).json({ message: "Server error", error: error.message });
+//   }
+// };
+
+
 
 // Fetch all users with autoTradeBot set to true
 export const fetchAllUsersWithAutoTradeBot = async (req, res) => {

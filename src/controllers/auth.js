@@ -23,6 +23,8 @@ import {
 import { OAuth2Client } from 'google-auth-library';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+console.log("google : ", process.env.GOOGLE_CLIENT_ID);
+
 
 export const signup = async (req, res, next) => {
   const { email, name, password, phoneNumber, country, state } = req.body;
@@ -85,6 +87,9 @@ export const googleAuth = async (req, res, next) => {
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
+
+    console.log("google : ", process.env.GOOGLE_CLIENT_ID);
+    
 
     const payload = ticket.getPayload();
     console.log(payload);
