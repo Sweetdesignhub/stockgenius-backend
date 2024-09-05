@@ -298,7 +298,7 @@ export const deleteUser = async (req, res, next) => {
 // };
 
 const TIME_CONDITION_START = "09:15";
-const TIME_CONDITION_END = "16:30";
+const TIME_CONDITION_END = "15:30";
 
 // In-memory storage for loopIntervalId
 // const activeIntervals = {};
@@ -539,8 +539,8 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
       clearInterval(activeIntervals.intraday[userId]);
     }
 
-    activeIntervals.intraday[userId] = setInterval(autoTradeLoop, 25 * 1000);
-    console.log("Auto-trade loop started with interval of 25 seconds");
+    activeIntervals.intraday[userId] = setInterval(autoTradeLoop, 15 * 1000);
+    console.log("Auto-trade loop started with interval of 15 seconds");
 
     await autoTradeLoop();
 
