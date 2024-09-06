@@ -12,6 +12,7 @@ import userRoutes from './routes/user.route.js';
 import fyersRoutes from './routes/brokers/fyers/fyers.route.js';
 import authRoutes from './routes/auth.js';
 import startReportScheduler from './utils/orderReportGenerator.js';
+import aiTradingBotRoutes from './routes/aiTradingBot.routes.js';
 
 dotenv.config();
 
@@ -52,6 +53,8 @@ app.use((req, res, next) => {
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/fyers', fyersRoutes);
+
+app.use('/api/v1/ai-trading-bots', aiTradingBotRoutes);
 
 app.use(errorHandler);
 
