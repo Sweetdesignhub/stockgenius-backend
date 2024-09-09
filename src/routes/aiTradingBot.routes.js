@@ -16,16 +16,16 @@ import { verifyUser } from "../middlewares/verifyUser.js";
 const router = express.Router();
 
 // Apply verifyUser middleware to all routes
-// router.use(verifyUser);
+router.use(verifyUser);
 
 // Get all bots of all users (admin only)
 router.get("/all", getAllBots);
 
 // Create a new AI trading bot
-router.post("/createBot", createBot);
+router.post("/createBot/:userId", verifyUser, createBot);
 
 // Get all AI trading bots for a user
-router.get("/getBotsByUserId", getBotsByUserId);
+router.get("/getBotsByUserId/:userId", getBotsByUserId);
 
 // Get a specific AI trading bot
 router.get("/:id/getBotById", checkBotAccess, getBotById);

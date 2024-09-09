@@ -1,6 +1,7 @@
 import AITradingBot from "../models/aiTradingBot.model.js";
 import User from "../models/user.js";
 import FyersUserDetail from "../models/brokers/fyers/fyersUserDetail.model.js";
+import moment from "moment";
 
 // Middleware to check if the user has access to the bot
 const checkBotAccess = async (req, res, next) => {
@@ -10,12 +11,10 @@ const checkBotAccess = async (req, res, next) => {
       return res.status(404).json({ message: "Bot not found" });
     }
     if (bot.userId.toString() !== req.user.userId) {
-      return res
-        .status(403)
-        .json({
-          message:
-            "Access denied. You do not have permission to access this bot.",
-        });
+      return res.status(403).json({
+        message:
+          "Access denied. You do not have permission to access this bot.",
+      });
     }
     req.bot = bot;
     next();
@@ -40,69 +39,190 @@ export const getAllBots = async (req, res) => {
   }
 };
 
+// // Create a new AI trading bot
+// export const createBot = async (req, res) => {
+//   const { userId } = req.params;
+//   const {
+//     tradeRatio,
+//     totalBalance,
+//     scheduled,
+//     limits,
+//     profitPercentage,
+//     riskPercentage,
+//     productType,
+//   } = req.body;
+
+//   // Validate product type
+//   if (!["INTRADAY", "CNC"].includes(productType)) {
+//     return res
+//       .status(400)
+//       .json({ message: "Invalid product type. Must be 'INTRADAY' or 'CNC'." });
+//   }
+
+//   try {
+//     const user = await User.findById(userId);
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     const fyersUserDetails = await FyersUserDetail.findOne({ userId });
+//     if (!fyersUserDetails || !fyersUserDetails.accessToken) {
+//       return res.status(404).json({
+//         message: "Fyers user details not found or access token missing",
+//       });
+//     }
+
+//     // Check if a bot of the same productType already exists for today
+//     const today = moment().startOf("day"); // Get the start of today
+//     const existingBot = await AITradingBot.findOne({
+//       userId,
+//       productType,
+//       createdAt: { $gte: today.toDate() }, // Check if the bot was created today
+//     });
+
+//     if (existingBot) {
+//       return res.status(400).json({
+//         message: `You have already created a ${productType} bot today. You can only create one ${productType} bot per day.`,
+//       });
+//     }
+
+//     // Create bot object based on product type
+//     const botData = {
+//       tradeRatio,
+//       totalBalance,
+//       scheduled,
+//       limits,
+//       profitPercentage,
+//       riskPercentage,
+//       productType,
+//       userId,
+//     };
+
+//     const newBot = new AITradingBot(botData);
+
+//     const savedBot = await newBot.save();
+//     res.status(201).json(savedBot);
+//   } catch (error) {
+//     console.error("Error in createBot:", error);
+//     if (error.name === "ValidationError") {
+//       const validationErrors = Object.values(error.errors).map(
+//         (err) => err.message
+//       );
+//       res
+//         .status(400)
+//         .json({ message: "Validation failed", errors: validationErrors });
+//     } else {
+//       res
+//         .status(500)
+//         .json({ message: "Internal server error", error: error.message });
+//     }
+//   }
+// };
+
 // Create a new AI trading bot
-export const createBot = async (req, res) => {
-    const { userId } = req.params;
- console.log(userId)
-    const {
-        tradeRatio,
-        totalBalance,
-        scheduled,
-        limits,
-        profitPercentage,
-        riskPercentage,
-        productType,
- 
-      } = req.body;
-          // Validate product type
-    if (!['INTRADAY', 'CNC'].includes(productType)) {
-        return res.status(400).json({ message: "Invalid product type. Must be 'INTRADAY' or 'CNC'." });
-      }
+export const createBot = async (req , res) => {
+  const { userId } = req.params;
+  const {
+    name,
+    image,
+    profitPercentage,
+    riskPercentage,
+    market,
+    timestamp,
+    extraImage,
+    tradeRatio,
+    profitGained,
+    workingTime,
+    totalBalance,
+    scheduled,
+    numberOfTrades,
+    percentageGain,
+    status,
+    reInvestment,
+    limits,
+    productType,
+  } = req.body;
+
+  // Validate required fields
+  const requiredFields = ['name', 'profitPercentage', 'riskPercentage', 'productType'];
+  for (const field of requiredFields) {
+    if (!req.body[field]) {
+      return res.status(400).json({ message: `Missing required field: ${field}` });
+    }
+  }
+
+  // Validate product type
+  if (!["INTRADAY", "CNC"].includes(productType)) {
+    return res.status(400).json({ message: "Invalid product type. Must be 'INTRADAY' or 'CNC'." });
+  }
 
   try {
-
+    // Validate User
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Validate FyersUserDetail
     const fyersUserDetails = await FyersUserDetail.findOne({ userId });
     if (!fyersUserDetails || !fyersUserDetails.accessToken) {
-      return res.status(404).json({
-        message: "Fyers user details not found or access token missing",
+      return res.status(404).json({ message: "Fyers user details not found or access token missing" });
+    }
+
+    // Check if a bot of the same productType already exists for today
+    const today = moment().startOf('day').toDate();
+    const existingBot = await AITradingBot.findOne({
+      userId,
+      productType,
+      createdAt: { $gte: today }
+    });
+
+    if (existingBot) {
+      return res.status(400).json({
+        message: `A ${productType} bot has already been created today. You can only create one ${productType} bot per day.`
       });
     }
 
-    // Create bot object based on product type
+    // Create bot object with all fields from the schema
     const botData = {
-      tradeRatio,
-      totalBalance,
-      scheduled,
-      limits,
+      name,
+      image,
       profitPercentage,
       riskPercentage,
+      market,
+      timestamp: timestamp || new Date(),
+      extraImage,  
+      dynamicData: [{
+        tradeRatio,
+        profitGained,
+        workingTime,
+        totalBalance,
+        scheduled,
+        numberOfTrades,
+        percentageGain,
+        status: status || "Inactive",
+        reInvestment,
+        limits
+      }],
       productType,
       userId,
+      broker: "Fyers"
     };
 
-    // if (productType === 'INTRADAY') {
-    //   botData.status = status || 'inactive';
-    // } else if (productType === 'CNC') {
-    //   botData.status = autoTradeBotCNC || 'inactive';
-    // }
-
+    // Create and save the bot
     const newBot = new AITradingBot(botData);
-
     const savedBot = await newBot.save();
+
     res.status(201).json(savedBot);
   } catch (error) {
-    console.error("Error in createBot:", error);
-    if (error.name === 'ValidationError') {
+    console.error("Error creating bot:", error);
+
+    if (error instanceof mongoose.Error.ValidationError) {
       const validationErrors = Object.values(error.errors).map(err => err.message);
-      res.status(400).json({ message: "Validation failed", errors: validationErrors });
-    } else {
-      res.status(500).json({ message: "Internal server error", error: error.message });
+      return res.status(400).json({ message: "Validation failed", errors: validationErrors });
     }
+
+    res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };
 
@@ -110,12 +230,39 @@ export const createBot = async (req, res) => {
 // Get all AI trading bots for a user
 export const getBotsByUserId = async (req, res) => {
   try {
+    const { userId } = req.params;
+
+    // Validate userId
+    if (!userId) {
+      return res.status(400).json({
+        message: "User ID is required.",
+      });
+    }
+
+    // Fetch bots associated with the user ID
     const bots = await AITradingBot.find({ userId: req.user.userId });
-    res.json(bots);
+
+    if (!bots || bots.length === 0) {
+      return res.status(200).json({
+        message: "No bots found for this user.",
+        bots: [],
+      });
+    }
+
+    // Return bots if found
+    res.status(200).json({
+      message: "Bots fetched successfully.",
+      bots,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error fetching bots:", error);
+    res.status(500).json({
+      message: "An error occurred while fetching bots.",
+      error: error.message,
+    });
   }
 };
+
 
 // Get a specific AI trading bot
 export const getBotById = async (req, res) => {
@@ -181,7 +328,6 @@ export const deleteBot = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 // Toggle bot status for INTRADAY
 export const toggleBotStatusINTRADAY = async (req, res) => {
