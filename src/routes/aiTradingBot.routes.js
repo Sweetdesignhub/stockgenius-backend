@@ -2,16 +2,13 @@ import express from "express";
 import {
   createBot,
   getBotsByUserId,
-  getBotById,
   updateBot,
   deleteBot,
-  toggleBotStatusINTRADAY,
-  toggleBotStatusCNC,
-  updateWorkingTime,
   getAllBots,
-  checkBotAccess,
+  getBotById,
 } from "../controllers/aiTradingBot.controller.js";
 import { verifyUser } from "../middlewares/verifyUser.js";
+import { checkBotAccess } from "../middlewares/validateBot.js";
 
 const router = express.Router();
 
@@ -27,22 +24,14 @@ router.post("/createBot/:userId", verifyUser, createBot);
 // Get all AI trading bots for a user
 router.get("/getBotsByUserId/:userId", getBotsByUserId);
 
-// Get a specific AI trading bot
-router.get("/:id/getBotById", checkBotAccess, getBotById);
+// Get  AI trading bots BY ID
+router.get("/users/:userId/bots/:botId", checkBotAccess, getBotById);
 
 // Update an AI trading bot
-router.put("/:id/updateBot", checkBotAccess, updateBot);
+router.put("/users/:userId/bots/:botId", checkBotAccess, updateBot);
 
 // Delete an AI trading bot
-router.delete("/:id/deleteBot", checkBotAccess, deleteBot);
+router.delete("/users/:userId/bots/:botId", checkBotAccess, deleteBot);
 
-// Toggle bot status for INTRADAY
-router.patch("/:id/toggle-intraday", checkBotAccess, toggleBotStatusINTRADAY);
-
-// Toggle bot status for CNC
-router.patch("/:id/toggle-cnc", checkBotAccess, toggleBotStatusCNC);
-
-// Update bot's working time
-router.patch("/:id/working-time", checkBotAccess, updateWorkingTime);
 
 export default router;
