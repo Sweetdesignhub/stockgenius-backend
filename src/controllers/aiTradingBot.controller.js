@@ -277,7 +277,6 @@ export const updateBot = async (req, res) => {
       ...(profitPercentage && { profitPercentage }),
       ...(riskPercentage && { riskPercentage }),
       ...(market && { market }),
-      ...(timestamp && { timestamp }),
       ...(extraImage && { extraImage }),
       ...(productType && { productType }),
     };

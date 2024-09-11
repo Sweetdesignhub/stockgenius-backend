@@ -11,6 +11,7 @@ import {
 import FyersUserDetail from "../models/brokers/fyers/fyersUserDetail.model.js";
 import { validateOrder } from "../utils/validateOrder.js";
 import { sendCoreEngineEmail } from "../services/emailService.js";
+import AITradingBot from "../models/aiTradingBot.model.js";
 
 export const updateUser = async (req, res, next) => {
   if (!req.user) {
@@ -310,7 +311,7 @@ const activeIntervals = {
 };
 
 export const activateAutoTradeBotINTRADAY = async (req, res) => {
-  const { userId } = req.params;
+  const { userId, botId } = req.params;
   const { marginProfitPercentage, marginLossPercentage } = req.body;
 
   const marginProfit = parseFloat(marginProfitPercentage);
@@ -328,10 +329,28 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Validate if the bot exists
+    const existingBot = await AITradingBot.findOne({ _id: botId, userId });
+    if (!existingBot) {
+      return res.status(404).json({ message: "AI trading bot not found" });
+    }
+
     const fyersUserDetails = await FyersUserDetail.findOne({ userId });
     if (!fyersUserDetails || !fyersUserDetails.accessToken) {
       return res.status(404).json({
         message: "Fyers user details not found or access token missing",
+      });
+    }
+
+    // Check time condition before starting the loop
+    const currentTime = getCurrentTime();
+    if (
+      currentTime < TIME_CONDITION_START ||
+      currentTime > TIME_CONDITION_END
+    ) {
+      return res.status(400).json({
+        message:
+          "Auto trading can only be activated between 9:15 AM and 3:30 PM",
       });
     }
 
@@ -490,18 +509,18 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
             console.log("Placing orders:", chunk);
 
             try {
-              const placeOrderResponse = await axios.post(
-                `https://api.stockgenius.ai/api/v1/fyers/placeMultipleOrders/${userId}`,
-                { accessToken, orders: chunk }
-              );
-              const { successfulOrders = [], unsuccessfulOrders = [] } =
-                placeOrderResponse.data;
-              if (successfulOrders.length > 0) {
-                console.log("Successful orders:", successfulOrders);
-              }
-              if (unsuccessfulOrders.length > 0) {
-                console.log("Failed orders:", unsuccessfulOrders);
-              }
+              // const placeOrderResponse = await axios.post(
+              //   `https://api.stockgenius.ai/api/v1/fyers/placeMultipleOrders/${userId}`,
+              //   { accessToken, orders: chunk }
+              // );
+              // const { successfulOrders = [], unsuccessfulOrders = [] } =
+              //   placeOrderResponse.data;
+              // if (successfulOrders.length > 0) {
+              //   console.log("Successful orders:", successfulOrders);
+              // }
+              // if (unsuccessfulOrders.length > 0) {
+              //   console.log("Failed orders:", unsuccessfulOrders);
+              // }
             } catch (error) {
               console.error("Error placing orders:", error);
               throw error;
@@ -535,7 +554,10 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
 
     // Check if a loop is already running
     if (activeIntervals.intraday[userId]) {
-      console.log("Clearing existing interval ID:", activeIntervals.intraday[userId]);
+      console.log(
+        "Clearing existing interval ID:",
+        activeIntervals.intraday[userId]
+      );
       clearInterval(activeIntervals.intraday[userId]);
     }
 
@@ -544,7 +566,9 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
 
     await autoTradeLoop();
 
-    return res.status(200).json({ message: "Auto trade bot activated for Intraday" });
+    return res
+      .status(200)
+      .json({ message: "Auto trade bot activated for Intraday" });
   } catch (error) {
     console.error("Error activating auto trade bot:", error);
     return res
@@ -555,7 +579,7 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
 
 // for cnc market
 export const activateAutoTradeBotCNC = async (req, res) => {
-  const { userId } = req.params;
+  const { userId, botId } = req.params;
   const { marginProfitPercentage, marginLossPercentage } = req.body;
 
   const marginProfit = parseFloat(marginProfitPercentage);
@@ -573,10 +597,28 @@ export const activateAutoTradeBotCNC = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Validate if the bot exists
+    const existingBot = await AITradingBot.findOne({ _id: botId, userId });
+    if (!existingBot) {
+      return res.status(404).json({ message: "AI trading bot not found" });
+    }
+
     const fyersUserDetails = await FyersUserDetail.findOne({ userId });
     if (!fyersUserDetails || !fyersUserDetails.accessToken) {
       return res.status(404).json({
         message: "Fyers user details not found or access token missing",
+      });
+    }
+
+    // Check time condition before starting the loop
+    const currentTime = getCurrentTime();
+    if (
+      currentTime < TIME_CONDITION_START ||
+      currentTime > TIME_CONDITION_END
+    ) {
+      return res.status(400).json({
+        message:
+          "Auto trading can only be activated between 9:15 AM and 3:30 PM",
       });
     }
 
@@ -746,18 +788,18 @@ export const activateAutoTradeBotCNC = async (req, res) => {
             console.log("Placing orders:", chunk);
 
             try {
-              const placeOrderResponse = await axios.post(
-                `https://api.stockgenius.ai/api/v1/fyers/placeMultipleOrders/${userId}`,
-                { accessToken, orders: chunk }
-              );
-              const { successfulOrders = [], unsuccessfulOrders = [] } =
-                placeOrderResponse.data;
-              if (successfulOrders.length > 0) {
-                console.log("Successful orders:", successfulOrders);
-              }
-              if (unsuccessfulOrders.length > 0) {
-                console.log("Failed orders:", unsuccessfulOrders);
-              }
+              // const placeOrderResponse = await axios.post(
+              //   `https://api.stockgenius.ai/api/v1/fyers/placeMultipleOrders/${userId}`,
+              //   { accessToken, orders: chunk }
+              // );
+              // const { successfulOrders = [], unsuccessfulOrders = [] } =
+              //   placeOrderResponse.data;
+              // if (successfulOrders.length > 0) {
+              //   console.log("Successful orders:", successfulOrders);
+              // }
+              // if (unsuccessfulOrders.length > 0) {
+              //   console.log("Failed orders:", unsuccessfulOrders);
+              // }
             } catch (error) {
               console.error("Error placing orders:", error);
               throw error;
@@ -791,7 +833,10 @@ export const activateAutoTradeBotCNC = async (req, res) => {
 
     // Check if a loop is already running
     if (activeIntervals.cnc[userId]) {
-      console.log("Clearing existing interval ID:", activeIntervals.cnc[userId]);
+      console.log(
+        "Clearing existing interval ID:",
+        activeIntervals.cnc[userId]
+      );
       clearInterval(activeIntervals.cnc[userId]);
     }
 
@@ -800,7 +845,9 @@ export const activateAutoTradeBotCNC = async (req, res) => {
 
     await autoTradeLoop();
 
-    return res.status(200).json({ message: "Auto trade bot activated for CNC" });
+    return res
+      .status(200)
+      .json({ message: "Auto trade bot activated for CNC" });
   } catch (error) {
     console.error("Error activating auto trade bot:", error);
     return res
@@ -821,18 +868,25 @@ export const deactivateAutoTradeBotINTRADAY = async (req, res) => {
     // Stop the bot and clear the interval
     user.autoTradeBotINTRADAY = "stopped";
     await user.save();
-    
+
     // Clear interval for intraday mode
     if (activeIntervals.intraday[userId]) {
-      console.log("Clearing interval ID for intraday:", activeIntervals.intraday[userId]);
+      console.log(
+        "Clearing interval ID for intraday:",
+        activeIntervals.intraday[userId]
+      );
       clearInterval(activeIntervals.intraday[userId]);
       delete activeIntervals.intraday[userId];
     }
 
-    return res.status(200).json({ message: "Intraday auto trade bot deactivated" });
+    return res
+      .status(200)
+      .json({ message: "Intraday auto trade bot deactivated" });
   } catch (error) {
     console.error("Error deactivating Intraday bot:", error);
-    return res.status(500).json({ message: "Server error", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
   }
 };
 
@@ -848,7 +902,7 @@ export const deactivateAutoTradeBotCNC = async (req, res) => {
     // Stop the bot and clear the interval
     user.autoTradeBotCNC = "stopped";
     await user.save();
-    
+
     // Clear interval for CNC mode
     if (activeIntervals.cnc[userId]) {
       console.log("Clearing interval ID for CNC:", activeIntervals.cnc[userId]);
@@ -859,10 +913,11 @@ export const deactivateAutoTradeBotCNC = async (req, res) => {
     return res.status(200).json({ message: "CNC auto trade bot deactivated" });
   } catch (error) {
     console.error("Error deactivating CNC bot:", error);
-    return res.status(500).json({ message: "Server error", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
   }
 };
-
 
 //new logic
 
@@ -1101,8 +1156,6 @@ export const deactivateAutoTradeBotCNC = async (req, res) => {
 //     return res.status(500).json({ message: "Server error", error: error.message });
 //   }
 // };
-
-
 
 // Fetch all users with autoTradeBot set to true
 export const fetchAllUsersWithAutoTradeBot = async (req, res) => {
