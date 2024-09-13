@@ -80,6 +80,6 @@ router
     validateRequest,
     asyncHandler(refreshToken)
   )
-  .post('/sign-out', verifyUser, asyncHandler(logout));
+  .post('/sign-out', asyncHandler(logout));
 
 export default router;

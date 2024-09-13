@@ -23,7 +23,7 @@ import {
 import { OAuth2Client } from 'google-auth-library';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-console.log("google : ", process.env.GOOGLE_CLIENT_ID);
+// console.log("google : ", process.env.GOOGLE_CLIENT_ID);
 
 
 export const signup = async (req, res, next) => {
@@ -88,11 +88,11 @@ export const googleAuth = async (req, res, next) => {
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
-    console.log("google : ", process.env.GOOGLE_CLIENT_ID);
+    // console.log("google : ", process.env.GOOGLE_CLIENT_ID);
     
 
     const payload = ticket.getPayload();
-    console.log(payload);
+    // console.log(payload);
     const { email, name, picture } = payload;
 
     let user = await User.findOne({ email });
@@ -145,7 +145,7 @@ export const googleAuth = async (req, res, next) => {
 };
 
 export const googleUpdateUser = async (req, res, next) => {
-  console.log(req.body);
+  // console.log(req.body);
   try {
     const phoneOTP = generateOTP();
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
@@ -275,7 +275,11 @@ export const login = async (req, res, next) => {
     }
 
     const accessToken = generateAccessToken(user);
+    // console.log(accessToken);
+    
     const refreshToken = await generateRefreshToken(user);
+    // console.log(refreshToken);
+    
 
     res.setHeader('Set-Cookie', [accessToken, refreshToken]);
     res.json({ data: user, message: 'Login successful' });

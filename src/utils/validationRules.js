@@ -60,6 +60,11 @@ export const validateResetToken = [
   param('token').notEmpty().withMessage('Token is required'),
 ];
 
+// export const validateRefreshToken = [
+//   cookie('refreshToken').notEmpty().withMessage('Refresh token is required'),
+// ];
+
 export const validateRefreshToken = [
-  cookie('refreshToken').notEmpty().withMessage('Refresh token is required'),
+  cookie('accessToken').notEmpty().withMessage('Access token missing. Unable to refresh.'),
 ];
+

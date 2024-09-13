@@ -4,11 +4,13 @@ import User from '../models/user.js';
 
 export const generateAccessToken = (user) => {
   const token = jwt.sign({ userId: user._id }, process.env.JWT_ACCESS_SECRET, {
-    expiresIn: '15m',
+    expiresIn: '1m',
+    // expiresIn: '24h',
   });
   return serialize('accessToken', token, {
     httpOnly: true,
-    maxAge: 15 * 60, // 15 minutes
+    // maxAge: 24 * 60 * 60, //24 hrs
+    maxAge: 1 * 60, // 15 minutes
     sameSite: 'none',
     path: '/',
     // secure: process.env.NODE_ENV === 'production',

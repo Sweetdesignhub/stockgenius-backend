@@ -27,6 +27,9 @@ import { errorHandler } from '../utils/errorHandler.js';
 export const verifyUser = async (req, res, next) => {
   const token = req.cookies.accessToken;
 
+  // console.log("token" , token);
+  
+
   if (!token) return next(errorHandler(401, 'Acess token not found'));
 
   const decoded = verifyAccessToken(req);
