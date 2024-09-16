@@ -509,18 +509,18 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
             console.log("Placing orders:", chunk);
 
             try {
-              // const placeOrderResponse = await axios.post(
-              //   `https://api.stockgenius.ai/api/v1/fyers/placeMultipleOrders/${userId}`,
-              //   { accessToken, orders: chunk }
-              // );
-              // const { successfulOrders = [], unsuccessfulOrders = [] } =
-              //   placeOrderResponse.data;
-              // if (successfulOrders.length > 0) {
-              //   console.log("Successful orders:", successfulOrders);
-              // }
-              // if (unsuccessfulOrders.length > 0) {
-              //   console.log("Failed orders:", unsuccessfulOrders);
-              // }
+              const placeOrderResponse = await axios.post(
+                `https://api.stockgenius.ai/api/v1/fyers/placeMultipleOrders/${userId}`,
+                { accessToken, orders: chunk }
+              );
+              const { successfulOrders = [], unsuccessfulOrders = [] } =
+                placeOrderResponse.data;
+              if (successfulOrders.length > 0) {
+                console.log("Successful orders:", successfulOrders);
+              }
+              if (unsuccessfulOrders.length > 0) {
+                console.log("Failed orders:", unsuccessfulOrders);
+              }
             } catch (error) {
               console.error("Error placing orders:", error);
               throw error;
@@ -788,18 +788,18 @@ export const activateAutoTradeBotCNC = async (req, res) => {
             console.log("Placing orders:", chunk);
 
             try {
-              // const placeOrderResponse = await axios.post(
-              //   `https://api.stockgenius.ai/api/v1/fyers/placeMultipleOrders/${userId}`,
-              //   { accessToken, orders: chunk }
-              // );
-              // const { successfulOrders = [], unsuccessfulOrders = [] } =
-              //   placeOrderResponse.data;
-              // if (successfulOrders.length > 0) {
-              //   console.log("Successful orders:", successfulOrders);
-              // }
-              // if (unsuccessfulOrders.length > 0) {
-              //   console.log("Failed orders:", unsuccessfulOrders);
-              // }
+              const placeOrderResponse = await axios.post(
+                `https://api.stockgenius.ai/api/v1/fyers/placeMultipleOrders/${userId}`,
+                { accessToken, orders: chunk }
+              );
+              const { successfulOrders = [], unsuccessfulOrders = [] } =
+                placeOrderResponse.data;
+              if (successfulOrders.length > 0) {
+                console.log("Successful orders:", successfulOrders);
+              }
+              if (unsuccessfulOrders.length > 0) {
+                console.log("Failed orders:", unsuccessfulOrders);
+              }
             } catch (error) {
               console.error("Error placing orders:", error);
               throw error;
