@@ -83,15 +83,28 @@ export const createBot = async (req, res) => {
         });
     }
 
-    // Check if a bot of the same productType already exists for today
+    // Check if a bot with the same name already exists for today
     const today = moment().startOf("day").toDate();
     const existingBot = await AITradingBot.findOne({
+      userId,
+      name,
+      createdAt: { $gte: today },
+    });
+
+    if (existingBot) {
+      return res.status(400).json({
+        message: `A bot with the name "${name}" has already been created today. Please choose a different name.`,
+      });
+    }
+    
+    // Check if a bot of the same productType already exists for today
+    const existingProductTypeBot = await AITradingBot.findOne({
       userId,
       productType,
       createdAt: { $gte: today },
     });
 
-    if (existingBot) {
+    if (existingProductTypeBot) {
       return res.status(400).json({
         message: `A ${productType} bot has already been created today. You can only create one ${productType} bot per day.`,
       });

@@ -29,6 +29,21 @@ export const getCurrentTime = () => {
   return `${hours}:${minutes}`;
 };
 
+// export const getCurrentTime = () => {
+//   const now = new Date();
+  
+//   // Convert to IST using the Intl.DateTimeFormat API
+//   const options = { timeZone: "Asia/Kolkata", hour12: false }; // 24-hour format
+//   const formatter = new Intl.DateTimeFormat('en-GB', {
+//     ...options,
+//     hour: '2-digit',
+//     minute: '2-digit',
+//   });
+  
+//   return formatter.format(now); // Returns time in HH:mm format
+// };
+
+
 
 // Helper function to split array into chunks
 export const chunkArray = (array, chunkSize) => {
