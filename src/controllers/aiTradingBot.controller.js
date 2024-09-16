@@ -221,6 +221,8 @@ export const updateBot = async (req, res) => {
     tradeRatio,
     profitGained,
     workingTime,
+    todaysBotTime,
+    currentWeekTime,
     totalBalance,
     scheduled,
     numberOfTrades,
@@ -286,6 +288,8 @@ export const updateBot = async (req, res) => {
       tradeRatio ||
       profitGained ||
       workingTime ||
+      todaysBotTime ||
+      currentWeekTime ||
       totalBalance ||
       scheduled ||
       numberOfTrades ||
@@ -298,6 +302,8 @@ export const updateBot = async (req, res) => {
         tradeRatio: tradeRatio ?? existingBot.dynamicData[0].tradeRatio,
         profitGained: profitGained ?? existingBot.dynamicData[0].profitGained,
         workingTime: workingTime ?? existingBot.dynamicData[0].workingTime,
+        todaysBotTime: todaysBotTime ?? existingBot.dynamicData[0].todaysBotTime,
+        currentWeekTime: currentWeekTime ?? existingBot.dynamicData[0].currentWeekTime,
         totalBalance: totalBalance ?? existingBot.dynamicData[0].totalBalance,
         scheduled: scheduled ?? existingBot.dynamicData[0].scheduled,
         numberOfTrades:

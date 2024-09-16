@@ -24,6 +24,14 @@ const dynamicDataSchema = new Schema({
     type: String,
     default: 0,
   },
+  todaysBotTime: {
+    type: String,
+    default: 0,
+  },
+  currentWeekTime: {
+    type: String,
+    default: 0,
+  },
   totalBalance: {
     type: Number,
     default: 0,
@@ -42,7 +50,7 @@ const dynamicDataSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ["Active", "Inactive", "Running", "Stopped"],
+    enum: ["Schedule", "Inactive", "Running", "Stopped"],
     default: "Inactive",
   },
   reInvestment: {
