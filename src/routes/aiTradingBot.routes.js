@@ -13,7 +13,7 @@ import { checkBotAccess } from "../middlewares/validateBot.js";
 const router = express.Router();
 
 // Apply verifyUser middleware to all routes
-router.use(verifyUser);
+// router.use(verifyUser);
 
 // Get all bots of all users (admin only)
 router.get("/all", getAllBots);

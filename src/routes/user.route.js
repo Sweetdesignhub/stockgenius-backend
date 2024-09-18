@@ -18,25 +18,25 @@ router.delete("/delete/:id", verifyUser, deleteUser);
 // Route to activate auto trade bot for a user
 router.post(
   "/:userId/auto-trade-bot-INTRADAY/activate/bots/:botId",
-  verifyUser,
+  // verifyUser,
   activateAutoTradeBotINTRADAY
 );
 router.post(
   "/:userId/auto-trade-bot-CNC/activate/bots/:botId",
-  verifyUser,
+  // verifyUser,
   activateAutoTradeBotCNC
 );
 
 // Route to deactivate auto trade bot for a user
 router.patch(
   "/:userId/auto-trade-bot-INTRADAY/deactivate/bots/:botId",
-  verifyUser,
+  // verifyUser,
   deactivateAutoTradeBotINTRADAY
 );
 // Route to deactivate auto trade bot for a user
 router.patch(
   "/:userId/auto-trade-bot-CNC/deactivate/bots/:botId",
-  verifyUser,
+  // verifyUser,
   deactivateAutoTradeBotCNC
 );
 
