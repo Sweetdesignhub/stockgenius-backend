@@ -1,20 +1,20 @@
 import cron from 'node-cron';
 import moment from 'moment-timezone'; // For handling IST
-import axios from 'axios'; // For making HTTP requests
+import axios from 'axios'; 
 import AITradingBot from '../models/aiTradingBot.model.js';
 import { endHour, endMin, startHour, startMin } from '../utils/endStartTime.js';
 
 const activateBots = async () => {
   try {
-    // Get current date in IST timezone
+    //  current date in IST timezone
     const now = moment().tz('Asia/Kolkata');
     const todayStart = now.startOf('day').toDate();
     const todayEnd = now.endOf('day').toDate();
 
-    // Find bots created today with status 'Schedule'
+    //  bots created today with status 'Schedule'
     const botsToActivate = await AITradingBot.find({
       createdAt: { $gte: todayStart, $lt: todayEnd },
-      dynamicData: { $elemMatch: { status: 'Schedule' } }, // Adjusted query to handle arrays
+      dynamicData: { $elemMatch: { status: 'Schedule' } }, // query to handle arrays
     });
 
     console.log(botsToActivate);
@@ -47,15 +47,15 @@ const activateBots = async () => {
 
 const deactivateBots = async () => {
   try {
-    // Get current date in IST timezone
+    //  current date in IST timezone
     const now = moment().tz('Asia/Kolkata');
     const todayStart = now.startOf('day').toDate();
     const todayEnd = now.endOf('day').toDate();
 
-    // Find bots created today with status 'Running'
+    //  bots created today with status 'Running'
     const botsToDeactivate = await AITradingBot.find({
       createdAt: { $gte: todayStart, $lt: todayEnd },
-      dynamicData: { $elemMatch: { status: 'Running' } }, // Adjusted query to handle arrays
+      dynamicData: { $elemMatch: { status: 'Running' } }, //  query to handle arrays
     });
 
     console.log(botsToDeactivate);
