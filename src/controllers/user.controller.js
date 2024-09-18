@@ -3,8 +3,6 @@ import { errorHandler } from "../utils/errorHandler.js";
 import bcryptjs from "bcryptjs";
 import axios from "axios";
 import {
-  checkFunds,
-  checkHoldings,
   chunkArray,
   getCurrentTime,
 } from "../utils/helper.js";
@@ -12,6 +10,10 @@ import FyersUserDetail from "../models/brokers/fyers/fyersUserDetail.model.js";
 import { validateOrder } from "../utils/validateOrder.js";
 import { sendCoreEngineEmail } from "../services/emailService.js";
 import AITradingBot from "../models/aiTradingBot.model.js";
+import { endHour, endMin, startHour, startMin } from "../utils/endStartTime.js";
+
+const API_BASE_URL='https://api.stockgenius.ai';
+// const API_BASE_URL='http://localhost:8080';
 
 export const updateUser = async (req, res, next) => {
   if (!req.user) {
@@ -298,8 +300,10 @@ export const deleteUser = async (req, res, next) => {
 //   }
 // };
 
-const TIME_CONDITION_START = "09:15";
-const TIME_CONDITION_END = "15:30";
+const TIME_CONDITION_START = `${startHour.toString().padStart(2, '0')}:${startMin.toString().padStart(2, '0')}` || "09:30";
+
+const TIME_CONDITION_END = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}` || "15:30";
+
 
 // In-memory storage for loopIntervalId
 // const activeIntervals = {};
@@ -408,7 +412,7 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
         const accessToken = fyersUserDetails.accessToken;
 
         // Fetch positions and save
-        const positionAndSaveUrl = `https://api.stockgenius.ai/api/v1/fyers/fetchPositionsAndSave/${userId}`;
+        const positionAndSaveUrl = `${API_BASE_URL}/api/v1/fyers/fetchPositionsAndSave/${userId}`;
         const positionAndSaveResponse = await axios.post(positionAndSaveUrl, {
           accessToken,
         });
@@ -423,7 +427,7 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
         );
 
         // Fetch funds
-        const fundsUrl = `https://api.stockgenius.ai/api/v1/fyers/fetchFundsAndSave/${userId}`;
+        const fundsUrl = `${API_BASE_URL}/api/v1/fyers/fetchFundsAndSave/${userId}`;
         const fundsResponse = await axios.post(fundsUrl, { accessToken });
 
         if (fundsResponse.status !== 200) {
@@ -510,7 +514,7 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
 
             try {
               const placeOrderResponse = await axios.post(
-                `https://api.stockgenius.ai/api/v1/fyers/placeMultipleOrders/${userId}`,
+                `${API_BASE_URL}/api/v1/fyers/placeMultipleOrders/${userId}`,
                 { accessToken, orders: chunk }
               );
               const { successfulOrders = [], unsuccessfulOrders = [] } =
@@ -532,6 +536,34 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
 
           console.log(
             "Orders placed successfully, auto trade bot set to active"
+          );
+
+          // Fetch orders and save
+          const ordersAndSaveUrl = `${API_BASE_URL}/api/v1/fyers/fetchOrdersAndSave/${userId}`;
+          const ordersAndSaveResponse = await axios.post(ordersAndSaveUrl, {
+            accessToken,
+          });
+
+          if (ordersAndSaveResponse.status !== 200) {
+            throw new Error("Failed to fetch and save positions");
+          }
+          console.log(
+            "Orders and save successful:",
+            ordersAndSaveResponse.data
+          );
+
+          // Fetch trades and save
+          const tradesAndSaveUrl = `${API_BASE_URL}/api/v1/fyers/fetchTradesAndSave/${userId}`;
+          const tradesAndSaveResponse = await axios.post(tradesAndSaveUrl, {
+            accessToken,
+          });
+
+          if (tradesAndSaveResponse.status !== 200) {
+            throw new Error("Failed to fetch and save positions");
+          }
+          console.log(
+            "Orders and save successful:",
+            tradesAndSaveResponse.data
           );
         } else {
           console.error("Unexpected response format:", response.data);
@@ -673,7 +705,7 @@ export const activateAutoTradeBotCNC = async (req, res) => {
         const accessToken = fyersUserDetails.accessToken;
 
         // Fetch latest positions and save
-        const positionAndSaveUrl = `https://api.stockgenius.ai/api/v1/fyers/fetchPositionsAndSave/${userId}`;
+        const positionAndSaveUrl = `${API_BASE_URL}/api/v1/fyers/fetchPositionsAndSave/${userId}`;
         const positionAndSaveResponse = await axios.post(positionAndSaveUrl, {
           accessToken,
         });
@@ -687,7 +719,7 @@ export const activateAutoTradeBotCNC = async (req, res) => {
           positionAndSaveResponse.data
         );
         // Fetch latest holdings and save
-        const holdingAndSaveUrl = `https://api.stockgenius.ai/api/v1/fyers/fetchHoldingsAndSave/${userId}`;
+        const holdingAndSaveUrl = `${API_BASE_URL}/api/v1/fyers/fetchHoldingsAndSave/${userId}`;
         const holdingAndSaveResponse = await axios.post(holdingAndSaveUrl, {
           accessToken,
         });
@@ -702,7 +734,7 @@ export const activateAutoTradeBotCNC = async (req, res) => {
         );
 
         // Fetch funds
-        const fundsUrl = `https://api.stockgenius.ai/api/v1/fyers/fetchFundsAndSave/${userId}`;
+        const fundsUrl = `${API_BASE_URL}/api/v1/fyers/fetchFundsAndSave/${userId}`;
         const fundsResponse = await axios.post(fundsUrl, { accessToken });
 
         if (fundsResponse.status !== 200) {
@@ -789,7 +821,7 @@ export const activateAutoTradeBotCNC = async (req, res) => {
 
             try {
               const placeOrderResponse = await axios.post(
-                `https://api.stockgenius.ai/api/v1/fyers/placeMultipleOrders/${userId}`,
+                `${API_BASE_URL}/api/v1/fyers/placeMultipleOrders/${userId}`,
                 { accessToken, orders: chunk }
               );
               const { successfulOrders = [], unsuccessfulOrders = [] } =
@@ -811,6 +843,34 @@ export const activateAutoTradeBotCNC = async (req, res) => {
 
           console.log(
             "Orders placed successfully, auto trade bot set to active"
+          );
+
+          // Fetch orders and save
+          const ordersAndSaveUrl = `${API_BASE_URL}/api/v1/fyers/fetchOrdersAndSave/${userId}`;
+          const ordersAndSaveResponse = await axios.post(ordersAndSaveUrl, {
+            accessToken,
+          });
+
+          if (ordersAndSaveResponse.status !== 200) {
+            throw new Error("Failed to fetch and save positions");
+          }
+          console.log(
+            "Orders and save successful:",
+            ordersAndSaveResponse.data
+          );
+
+          // Fetch trades and save
+          const tradesAndSaveUrl = `${API_BASE_URL}/api/v1/fyers/fetchTradesAndSave/${userId}`;
+          const tradesAndSaveResponse = await axios.post(tradesAndSaveUrl, {
+            accessToken,
+          });
+
+          if (tradesAndSaveResponse.status !== 200) {
+            throw new Error("Failed to fetch and save positions");
+          }
+          console.log(
+            "Orders and save successful:",
+            tradesAndSaveResponse.data
           );
         } else {
           console.error("Unexpected response format:", response.data);

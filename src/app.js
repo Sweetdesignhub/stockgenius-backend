@@ -13,6 +13,7 @@ import fyersRoutes from './routes/brokers/fyers/fyers.route.js';
 import authRoutes from './routes/auth.js';
 import startReportScheduler from './utils/orderReportGenerator.js';
 import aiTradingBotRoutes from './routes/aiTradingBot.routes.js';
+import startBotScheduler from './services/botScheduler.js';
 
 dotenv.config();
 
@@ -59,5 +60,8 @@ app.use('/api/v1/ai-trading-bots', aiTradingBotRoutes);
 app.use(errorHandler);
 
 startReportScheduler();
+
+// Start the scheduler for activate and deactivate bot
+startBotScheduler();
 
 export { app };
