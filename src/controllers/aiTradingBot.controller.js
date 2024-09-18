@@ -164,6 +164,7 @@ export const createBot = async (req, res) => {
 export const getBotsByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
+    
 
     // Validate userId
     if (!userId) {
@@ -173,7 +174,8 @@ export const getBotsByUserId = async (req, res) => {
     }
 
     // Fetch bots associated with the user ID
-    const bots = await AITradingBot.find({ userId: req.user.userId });
+    const bots = await AITradingBot.find({ userId });
+    
 
     if (!bots || bots.length === 0) {
       return res.status(200).json({
