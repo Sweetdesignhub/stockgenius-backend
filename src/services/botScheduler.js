@@ -4,6 +4,8 @@ import axios from 'axios';
 import AITradingBot from '../models/aiTradingBot.model.js';
 import { endHour, endMin, startHour, startMin } from '../utils/endStartTime.js';
 
+const API_BASE_URL='https://api.stockgenius.ai';
+
 const activateBots = async () => {
   try {
     //  current date in IST timezone
@@ -81,7 +83,7 @@ const getApiEndpoint = (action, bot) => {
   const botType = bot.productType;
   const currentUserId = bot.userId;
   if (botType === 'INTRADAY' || botType === 'CNC') {
-    return `http://localhost:8080/api/v1/users/${currentUserId}/auto-trade-bot-${botType}/${action}/bots/${bot._id}`;
+    return `${API_BASE_URL}/api/v1/users/${currentUserId}/auto-trade-bot-${botType}/${action}/bots/${bot._id}`;
   }
   return '';
 };
