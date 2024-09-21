@@ -9,7 +9,8 @@ const API_BASE_URL='https://api.stockgenius.ai';
 const activateBots = async () => {
   try {
     //  current date in IST timezone
-    const now = moment().tz('Asia/Kolkata');
+    // const now = moment().tz('Asia/Kolkata');
+    const now = moment().tz("America/Chicago");
     const todayStart = now.startOf('day').toDate();
     const todayEnd = now.endOf('day').toDate();
 
@@ -50,7 +51,8 @@ const activateBots = async () => {
 const deactivateBots = async () => {
   try {
     //  current date in IST timezone
-    const now = moment().tz('Asia/Kolkata');
+    // const now = moment().tz('Asia/Kolkata');
+    const now = moment().tz("America/Chicago");
     const todayStart = now.startOf('day').toDate();
     const todayEnd = now.endOf('day').toDate();
 
