@@ -10,7 +10,7 @@ const activateBots = async () => {
   try {
     //  current date in IST timezone
     // const now = moment().tz('Asia/Kolkata');
-    const now = moment().tz("America/Chicago");
+    const now = moment().utc();
     const todayStart = now.startOf('day').toDate();
     const todayEnd = now.endOf('day').toDate();
 
@@ -52,7 +52,7 @@ const deactivateBots = async () => {
   try {
     //  current date in IST timezone
     // const now = moment().tz('Asia/Kolkata');
-    const now = moment().tz("America/Chicago");
+    const now = moment().utc();
     const todayStart = now.startOf('day').toDate();
     const todayEnd = now.endOf('day').toDate();
 
@@ -93,9 +93,9 @@ const getApiEndpoint = (action, bot) => {
 
 // Function to start the scheduler
 export default function startBotScheduler() {
-    // Schedule the task to run daily at 9:30 AM IST for activation
+    // Schedule the task to run daily at 9:15 AM IST for activation
     cron.schedule(`${startMin} ${startHour} * * *`, () => {
-      console.log('Running bot activation task at 9:30 AM IST');
+      console.log('Running bot activation task at 9:15 AM IST');
       activateBots();
     });
   

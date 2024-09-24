@@ -300,9 +300,9 @@ export const deleteUser = async (req, res, next) => {
 //   }
 // };
 
-const TIME_CONDITION_START = `${startHour.toString().padStart(2, '0')}:${startMin.toString().padStart(2, '0')}` || "09:30";
+const TIME_CONDITION_START = `${startHour.toString().padStart(2, '0')}:${startMin.toString().padStart(2, '0')}` || "3:45";
 
-const TIME_CONDITION_END = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}` || "15:30";
+const TIME_CONDITION_END = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}` || "10:00";
 
 
 // In-memory storage for loopIntervalId
