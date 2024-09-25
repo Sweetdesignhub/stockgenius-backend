@@ -22,15 +22,15 @@ const dynamicDataSchema = new Schema({
   },
   workingTime: {
     type: String,
-    default: 0,
+    default: '0',
   },
   todaysBotTime: {
     type: String,
-    default: 0,
+    default: '0',
   },
   currentWeekTime: {
     type: String,
-    default: 0,
+    default: '0',
   },
   totalBalance: {
     type: Number,

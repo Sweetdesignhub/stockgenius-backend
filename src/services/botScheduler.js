@@ -36,7 +36,14 @@ const activateBots = async () => {
         // Update the status within the dynamicData array
         await AITradingBot.updateOne(
           { _id: bot._id, 'dynamicData._id': bot.dynamicData[0]._id },
-          { $set: { 'dynamicData.$.status': 'Running' } }
+          { 
+            $set: { 
+              'dynamicData.$.status': 'Running',
+              'dynamicData.$.workingTime': '0',
+              'dynamicData.$.todaysBotTime': '0',
+              'dynamicData.$.currentWeekTime': '0'
+            } 
+          }
         );
       
         console.log(`Activated bot with ID: ${bot._id}`);
@@ -66,10 +73,23 @@ const deactivateBots = async () => {
       const apiEndpoint = getApiEndpoint('deactivate', bot);
       await axios.patch(apiEndpoint);
 
+            // Fetch the latest bot data to get the current time values
+            const updatedBot = await AITradingBot.findById(bot._id);
+            const finalWorkingTime = updatedBot.dynamicData[0].workingTime;
+            const finalTodaysBotTime = updatedBot.dynamicData[0].todaysBotTime;
+            const finalCurrentWeekTime = updatedBot.dynamicData[0].currentWeekTime;     
+
       // Update the status within the dynamicData array
       await AITradingBot.updateOne(
         { _id: bot._id, 'dynamicData._id': bot.dynamicData[0]._id }, 
-        { $set: { 'dynamicData.$.status': 'Inactive' } }
+        { 
+          $set: { 
+            'dynamicData.$.status': 'Inactive',
+            'dynamicData.$.workingTime': finalWorkingTime,
+            'dynamicData.$.todaysBotTime': finalTodaysBotTime,
+            'dynamicData.$.currentWeekTime': finalCurrentWeekTime
+          } 
+        }
       );
 
       console.log(`Deactivated bot with ID: ${bot._id}`);
