@@ -11,7 +11,7 @@ import userRoutes from './routes/user.route.js';
 // import authRoutes from './routes/auth.route.js';
 import fyersRoutes from './routes/brokers/fyers/fyers.route.js';
 import authRoutes from './routes/auth.js';
-import startReportScheduler from './utils/orderReportGenerator.js';
+import  { startReportScheduler,scheduleEmailTopGainer, scheduleEmailTopLosers } from './utils/orderReportGenerator.js';
 import aiTradingBotRoutes from './routes/aiTradingBot.routes.js';
 import startBotScheduler from './services/botScheduler.js';
 
@@ -59,8 +59,11 @@ app.use('/api/v1/ai-trading-bots', aiTradingBotRoutes);
 
 app.use(errorHandler);
 
-startReportScheduler();
+//8am report
+scheduleEmailTopGainer();
+scheduleEmailTopLosers();
 
+startReportScheduler(); //evening report
 // Start the scheduler for activate and deactivate bot
 startBotScheduler();
 

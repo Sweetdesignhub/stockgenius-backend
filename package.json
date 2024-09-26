@@ -12,6 +12,7 @@
   "author": "Arshdeep Singh",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.1691.0",
     "axios": "^1.7.2",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
@@ -29,10 +30,12 @@
     "mongoose": "^8.4.1",
     "morgan": "^1.10.0",
     "node-cron": "^3.0.3",
-    "nodemailer": "^6.9.14",
+    "nodemailer": "^6.9.15",
     "nodemon": "^3.1.2",
     "pdf-lib": "^1.17.1",
     "pdfkit": "^0.15.0",
-    "twilio": "^5.2.2"
+    "twilio": "^5.2.2",
+    "url": "^0.11.4",
+    "xlsx": "^0.18.5"
   }
 }

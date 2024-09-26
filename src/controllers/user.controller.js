@@ -409,6 +409,8 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
         user.autoTradeBotINTRADAY = "running";
         await user.save();
 
+        
+
         const accessToken = fyersUserDetails.accessToken;
 
         // Fetch positions and save
@@ -580,6 +582,8 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
           clearInterval(activeIntervals.intraday[userId]);
           delete activeIntervals.intraday[userId];
         }
+
+        //
         await sendCoreEngineEmail();
       }
     };
