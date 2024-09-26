@@ -10,9 +10,10 @@ import FyersUserDetail from "../models/brokers/fyers/fyersUserDetail.model.js";
 import { validateOrder } from "../utils/validateOrder.js";
 import { sendCoreEngineEmail } from "../services/emailService.js";
 import AITradingBot from "../models/aiTradingBot.model.js";
+import ActivatedBot from '../models/activatedBot.model.js';
 import { endHour, endMin, startHour, startMin } from "../utils/endStartTime.js";
 
-const API_BASE_URL='https://api.stockgenius.ai';
+const API_BASE_URL = 'https://api.stockgenius.ai';
 // const API_BASE_URL='http://localhost:8080';
 
 export const updateUser = async (req, res, next) => {
@@ -409,7 +410,13 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
         user.autoTradeBotINTRADAY = "running";
         await user.save();
 
-        
+        // Save activated bot data
+        await ActivatedBot.create({
+          userId: user._id,
+          username: user.name,
+          email: user.email,
+          botType: 'INTRADAY',
+        });
 
         const accessToken = fyersUserDetails.accessToken;
 
@@ -705,6 +712,14 @@ export const activateAutoTradeBotCNC = async (req, res) => {
 
         user.autoTradeBotCNC = "running";
         await user.save();
+
+        // Save activated bot data
+        await ActivatedBot.create({
+          userId: user._id,
+          username: user.name,
+          email: user.email,
+          botType: 'CNC',
+        });
 
         const accessToken = fyersUserDetails.accessToken;
 
