@@ -2,11 +2,18 @@ import fs from "fs";
 import PDFDocument from "pdfkit";
 import FyersUserDetail from "../models/brokers/fyers/fyersUserDetail.model.js";
 import cron from "node-cron";
-import { sendDailyTopGainers, sendDailyTopLosers, sendDailyTradesReport, sendNoOrderMessage } from "../services/emailService.js";
+import {
+  sendDailyTopGainers,
+  sendDailyTopLosers,
+  sendDailyTradesReport,
+  sendNoOrderMessage,
+} from "../services/emailService.js";
 import User from "../models/user.js";
 import s3 from "./aws.js";
 import path from "path";
-import XLSX from 'xlsx';
+import XLSX from "xlsx";
+import ActivatedBot from "../models/activatedBot.model.js";
+import moment from "moment-timezone";
 
 const generatePDF = (orders) => {
   return new Promise((resolve, reject) => {
@@ -122,61 +129,82 @@ const generatePDF = (orders) => {
 
 async function generateAndSendReport() {
   try {
-    const excludedEmail = ""; // Replace with the email of the user to exclude
+    const excludedEmails = ["excluded@example.com"]; // Array of excluded emails
 
-    // Step 1: Fetch all users with activated bots
-    const eligibleUsers = await User.find({
-      $or: [
-        { autoTradeBotCNC: { $in: ["active", "running"] } },
-        { autoTradeBotINTRADAY: { $in: ["active", "running"] } },
-      ],
+    // Get today's date in IST
+    const startOfToday = moment.tz("Asia/Kolkata").startOf("day").toDate(); // 00:00:00.000
+    const startOfTomorrow = moment
+      .tz("Asia/Kolkata")
+      .add(1, "days")
+      .startOf("day")
+      .toDate(); // 00:00:00.000 of next day
+
+    // Step 1: Fetch all users with activated bots created today
+    const eligibleUsers = await ActivatedBot.find({
+      createdAt: { $gte: startOfToday, $lt: startOfTomorrow },
     });
 
-    // console.log(eligibleUsers);
+    console.log("Eligible users:", eligibleUsers);
 
-    // Filter out excluded email
+    // Step 2: Filter out excluded emails
     const eligibleUsersFiltered = eligibleUsers.filter(
-      (user) => user.email !== excludedEmail
+      (user) => !excludedEmails.includes(user.email)
     );
 
-    // console.log("filtered", eligibleUsersFiltered);
+    console.log("Filtered eligible users:", eligibleUsersFiltered);
 
-    // Step 2: Extract eligible userIds, email addresses, and user names
+    // Step 3: Prepare user details for reporting
     const userIdEmailMap = eligibleUsersFiltered.reduce((acc, user) => {
-      acc[user._id] = {
+      acc[user.userId] = {
         email: user.email,
         firstName: user.name.split(" ")[0], // Save first name
       };
       return acc;
     }, {});
 
-    // Step 3: Fetch FyersUserDetail based on eligible user IDs
+    // Step 4: Fetch FyersUserDetail based on eligible user IDs
     const fyersUsers = await FyersUserDetail.find({
       userId: { $in: Object.keys(userIdEmailMap) },
     });
 
-    for (const fyersUser of fyersUsers) {
-      const { email, firstName } = userIdEmailMap[fyersUser.userId];
+    // Step 5: Send reports or no order messages
+    await Promise.all(
+      fyersUsers.map(async (fyersUser) => {
+        const { email, firstName } = userIdEmailMap[fyersUser.userId];
 
-      // console.log("email:", email);
+        console.log("Processing email:", email);
 
-      if (
-        fyersUser.orders &&
-        fyersUser.orders.orderBook &&
-        fyersUser.orders.orderBook.length > 0
-      ) {
-        const pdfPath = await generatePDF(fyersUser.orders.orderBook);
+        // Convert authDate and compare it with today's date in IST
+        const authDateIST = moment
+          .tz(fyersUser.authDate, "Asia/Kolkata")
+          .startOf("day")
+          .toDate();
 
-        console.log(`Sending report to: ${email}`);
+        if (
+          fyersUser.orders?.orderBook?.length > 0 &&
+          authDateIST >= startOfToday &&
+          authDateIST < startOfTomorrow
+        ) {
+          try {
+            const pdfPath = await generatePDF(fyersUser.orders.orderBook);
+            console.log(`Sending report to: ${email}`);
+            await sendDailyTradesReport(pdfPath, email, firstName);
+            fs.unlinkSync(pdfPath); // Clean up the PDF file
+          } catch (pdfError) {
+            console.error(
+              `Error generating or sending PDF for user: ${email}`,
+              pdfError
+            );
+          }
+        } else {
+          console.log(
+            `No orders found for user: ${email}. Sending no order message.`
+          );
+          await sendNoOrderMessage(email, firstName);
+        }
+      })
+    );
 
-        await sendDailyTradesReport(pdfPath, email, firstName);
-        fs.unlinkSync(pdfPath);
-      } else {
-        // If no orders, send a message
-        console.log(`No orders found for user: ${email}. Sending no order message.`);
-        await sendNoOrderMessage(email, firstName); // Send no order message
-      }
-    }
     console.log("Daily reports sent successfully");
   } catch (error) {
     console.error("Error generating and sending reports:", error);
@@ -185,9 +213,9 @@ async function generateAndSendReport() {
 
 const startReportScheduler = () => {
   // cron job to run at 4:00 PM only on weekdays (Monday to Friday)
-  cron.schedule("20 15 * * 1-5", generateAndSendReport);
+  cron.schedule("0 16 * * 1-5", generateAndSendReport);
   console.log(
-    "Report scheduler started. Reports will be generated and sent on weekdays at 4:00 PM."
+    "Report scheduler started. Reports will be generated and sent on weekdays at 4:00 PM IST."
   );
 };
 
@@ -203,7 +231,7 @@ const fetchTopGainersReport = async () => {
     const data = await s3.getObject(params).promise();
     // console.log(data);
 
-    const tempFilePath = path.join('/tmp', 'top_gainers.xlsx');
+    const tempFilePath = path.join("/tmp", "top_gainers.xlsx");
     fs.writeFileSync(tempFilePath, data.Body); // Write to a temporary location
 
     // Read the Excel file to extract company names
@@ -214,12 +242,15 @@ const fetchTopGainersReport = async () => {
 
     // Extract company names from the first column (index 0)
     const stockSuggestions = [];
-    for (const row of jsonData.slice(1)) { // Skip the header row
+    for (const row of jsonData.slice(1)) {
+      // Skip the header row
       const stockName = row[0];
-      if (stockName) { // Check if the stock name is not empty
+      if (stockName) {
+        // Check if the stock name is not empty
         stockSuggestions.push(stockName);
       }
-      if (stockSuggestions.length === 3) { // Stop if we have 3 valid suggestions
+      if (stockSuggestions.length === 3) {
+        // Stop if we have 3 valid suggestions
         break;
       }
     }
@@ -233,25 +264,40 @@ const fetchTopGainersReport = async () => {
 };
 
 const scheduleEmailTopGainer = () => {
-  cron.schedule('0 8 * * *', async () => {
+  cron.schedule("0 8 * * *", async () => {
     try {
-      const users = await User.find({}, 'email name'); // Fetch all users
+      const users = await User.find({}, "email name"); // Fetch all users
       // console.log(users);
 
       const { filePath, stockSuggestions } = await fetchTopGainersReport();
       // console.log("Temporary file path:", filePath);
 
-      for (const user of users) { // Loop through all users
+      for (const user of users) {
+        // Loop through all users
         try {
           const firstName = user.name.split(" ")[0];
 
           // Create dynamic stock suggestion text
-          const stockSuggestionText = stockSuggestions.map((stock, index) => {
-            if (!stock) return ""; // Handle empty stock
-            return `[Stock ${index + 1}]: ${stock} - ${index === 0 ? 'Keep an eye on this stock, as it’s predicted to rise in the next few days.' : index === 1 ? 'Momentum is building! You might want to consider investing.' : 'This one’s got long-term potential, especially with the industry showing upward trends.'}`;
-          }).filter(Boolean).join('<br/>'); // Filter out any empty strings and join with line breaks
+          const stockSuggestionText = stockSuggestions
+            .map((stock, index) => {
+              if (!stock) return ""; // Handle empty stock
+              return `[Stock ${index + 1}]: ${stock} - ${
+                index === 0
+                  ? "Keep an eye on this stock, as it’s predicted to rise in the next few days."
+                  : index === 1
+                  ? "Momentum is building! You might want to consider investing."
+                  : "This one’s got long-term potential, especially with the industry showing upward trends."
+              }`;
+            })
+            .filter(Boolean)
+            .join("<br/>"); // Filter out any empty strings and join with line breaks
 
-          await sendDailyTopGainers(filePath, user.email, firstName, stockSuggestionText);
+          await sendDailyTopGainers(
+            filePath,
+            user.email,
+            firstName,
+            stockSuggestionText
+          );
           // console.log(`Email sent successfully to ${user.email}!`);
         } catch (error) {
           console.error(`Error sending email to ${user.email}:`, error.message);
@@ -260,7 +306,7 @@ const scheduleEmailTopGainer = () => {
 
       fs.unlinkSync(filePath); // Clean up the report file
     } catch (error) {
-      console.error('Error in scheduling emails:', error.message);
+      console.error("Error in scheduling emails:", error.message);
     }
   });
 };
@@ -277,7 +323,7 @@ const fetchTopLosersReport = async () => {
     const data = await s3.getObject(params).promise();
     // console.log(data);
 
-    const tempFilePath = path.join('/tmp', 'top_losers.xlsx'); // Updated file name
+    const tempFilePath = path.join("/tmp", "top_losers.xlsx"); // Updated file name
     fs.writeFileSync(tempFilePath, data.Body); // Write to a temporary location
 
     // Read the Excel file to extract company names
@@ -288,12 +334,15 @@ const fetchTopLosersReport = async () => {
 
     // Extract company names from the first column (index 0)
     const stockSuggestions = [];
-    for (const row of jsonData.slice(1)) { // Skip the header row
+    for (const row of jsonData.slice(1)) {
+      // Skip the header row
       const stockName = row[0];
-      if (stockName) { // Check if the stock name is not empty
+      if (stockName) {
+        // Check if the stock name is not empty
         stockSuggestions.push(stockName);
       }
-      if (stockSuggestions.length === 3) { // Stop if we have 3 valid suggestions
+      if (stockSuggestions.length === 3) {
+        // Stop if we have 3 valid suggestions
         break;
       }
     }
@@ -307,25 +356,40 @@ const fetchTopLosersReport = async () => {
 };
 
 const scheduleEmailTopLosers = () => {
-  cron.schedule('0 8 * * *', async () => {
+  cron.schedule("0 8 * * *", async () => {
     try {
-      const users = await User.find({}, 'email name'); // Fetch all users
+      const users = await User.find({}, "email name"); // Fetch all users
       // console.log(users);
 
       const { filePath, stockSuggestions } = await fetchTopLosersReport();
       // console.log("Temporary file path:", filePath);
 
-      for (const user of users) { // Loop through all users
+      for (const user of users) {
+        // Loop through all users
         try {
           const firstName = user.name.split(" ")[0];
 
           // Create dynamic stock suggestion text
-          const stockSuggestionText = stockSuggestions.map((stock, index) => {
-            if (!stock) return ""; // Handle empty stock
-            return `[Stock ${index + 1}]: ${stock} - ${index === 0 ? 'Keep an eye on this stock, as it’s predicted to rise in the next few days.' : index === 1 ? 'Momentum is building! You might want to consider investing.' : 'This one’s got long-term potential, especially with the industry showing upward trends.'}`;
-          }).filter(Boolean).join('<br/>'); // Filter out any empty strings and join with line breaks
+          const stockSuggestionText = stockSuggestions
+            .map((stock, index) => {
+              if (!stock) return ""; // Handle empty stock
+              return `[Stock ${index + 1}]: ${stock} - ${
+                index === 0
+                  ? "Keep an eye on this stock, as it’s predicted to rise in the next few days."
+                  : index === 1
+                  ? "Momentum is building! You might want to consider investing."
+                  : "This one’s got long-term potential, especially with the industry showing upward trends."
+              }`;
+            })
+            .filter(Boolean)
+            .join("<br/>"); // Filter out any empty strings and join with line breaks
 
-          await sendDailyTopLosers(filePath, user.email, firstName, stockSuggestionText);
+          await sendDailyTopLosers(
+            filePath,
+            user.email,
+            firstName,
+            stockSuggestionText
+          );
           // console.log(`Email sent successfully to ${user.email}!`);
         } catch (error) {
           console.error(`Error sending email to ${user.email}:`, error.message);
@@ -334,11 +398,9 @@ const scheduleEmailTopLosers = () => {
 
       fs.unlinkSync(filePath); // Clean up the report file
     } catch (error) {
-      console.error('Error in scheduling emails:', error.message);
+      console.error("Error in scheduling emails:", error.message);
     }
   });
 };
 
-
-export { scheduleEmailTopGainer,scheduleEmailTopLosers, startReportScheduler };
-
+export { scheduleEmailTopGainer, scheduleEmailTopLosers, startReportScheduler };

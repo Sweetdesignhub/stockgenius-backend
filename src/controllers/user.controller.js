@@ -2,18 +2,18 @@ import User from "../models/user.js";
 import { errorHandler } from "../utils/errorHandler.js";
 import bcryptjs from "bcryptjs";
 import axios from "axios";
-import {
-  chunkArray,
-  getCurrentTime,
-} from "../utils/helper.js";
+import { chunkArray, getCurrentTime } from "../utils/helper.js";
 import FyersUserDetail from "../models/brokers/fyers/fyersUserDetail.model.js";
 import { validateOrder } from "../utils/validateOrder.js";
-import { sendCoreEngineEmail } from "../services/emailService.js";
+import {
+  sendCoreEngineEmail,
+  sendUserBotStoppedEmail,
+} from "../services/emailService.js";
 import AITradingBot from "../models/aiTradingBot.model.js";
-import ActivatedBot from '../models/activatedBot.model.js';
+import ActivatedBot from "../models/activatedBot.model.js";
 import { endHour, endMin, startHour, startMin } from "../utils/endStartTime.js";
 
-const API_BASE_URL = 'https://api.stockgenius.ai';
+const API_BASE_URL = "https://api.stockgenius.ai";
 // const API_BASE_URL='http://localhost:8080';
 
 export const updateUser = async (req, res, next) => {
@@ -301,10 +301,15 @@ export const deleteUser = async (req, res, next) => {
 //   }
 // };
 
-const TIME_CONDITION_START = `${startHour.toString().padStart(2, '0')}:${startMin.toString().padStart(2, '0')}` || "09:15";
+const TIME_CONDITION_START =
+  `${startHour.toString().padStart(2, "0")}:${startMin
+    .toString()
+    .padStart(2, "0")}` || "09:15";
 
-const TIME_CONDITION_END = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}` || "15:30";
-
+const TIME_CONDITION_END =
+  `${endHour.toString().padStart(2, "0")}:${endMin
+    .toString()
+    .padStart(2, "0")}` || "15:30";
 
 // In-memory storage for loopIntervalId
 // const activeIntervals = {};
@@ -409,14 +414,6 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
 
         user.autoTradeBotINTRADAY = "running";
         await user.save();
-
-        // Save activated bot data
-        await ActivatedBot.create({
-          userId: user._id,
-          username: user.name,
-          email: user.email,
-          botType: 'INTRADAY',
-        });
 
         const accessToken = fyersUserDetails.accessToken;
 
@@ -590,8 +587,26 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
           delete activeIntervals.intraday[userId];
         }
 
-        //
-        await sendCoreEngineEmail();
+        const bot = await AITradingBot.findOne({ _id: botId, userId });
+        // console.log(bot);
+
+        if (!bot) {
+          throw new Error("Bot not found");
+        }
+
+        if (bot.productType === "INTRADAY") {
+          const latestDynamicData = bot.dynamicData[0];
+          if (latestDynamicData) {
+            latestDynamicData.status = "Inactive";
+            await bot.save();
+            console.log("bot status to inactive");
+          }
+
+          //
+          await sendCoreEngineEmail(userId, user.name, error, "INTRADAY");
+
+          await sendUserBotStoppedEmail(user.email, user.name,"INTRADAY");
+        }
       }
     };
 
@@ -609,9 +624,18 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
 
     await autoTradeLoop();
 
+    // Save activated bot data
+    await ActivatedBot.create({
+      userId: userId,
+      botId: botId,
+      name: user.name,
+      email: user.email,
+      botType: "INTRADAY",
+    });
+
     return res
       .status(200)
-      .json({ message: "Auto trade bot activated for Intraday" });
+      .json({ message: "Auto trade bot activated for Intraday", userId });
   } catch (error) {
     console.error("Error activating auto trade bot:", error);
     return res
@@ -712,14 +736,6 @@ export const activateAutoTradeBotCNC = async (req, res) => {
 
         user.autoTradeBotCNC = "running";
         await user.save();
-
-        // Save activated bot data
-        await ActivatedBot.create({
-          userId: user._id,
-          username: user.name,
-          email: user.email,
-          botType: 'CNC',
-        });
 
         const accessToken = fyersUserDetails.accessToken;
 
@@ -906,7 +922,24 @@ export const activateAutoTradeBotCNC = async (req, res) => {
           clearInterval(activeIntervals.cnc[userId]);
           delete activeIntervals.cnc[userId];
         }
-        await sendCoreEngineEmail();
+
+        const bot = await AITradingBot.findOne({ _id: botId, userId });
+        // console.log(bot);
+
+        if (!bot) {
+          throw new Error("Bot not found");
+        }
+
+        if (bot.productType === "CNC") {
+          const latestDynamicData = bot.dynamicData[0];
+          if (latestDynamicData) {
+            latestDynamicData.status = "Inactive";
+            await bot.save();
+            console.log("bot status ot inactive");
+          }
+          await sendCoreEngineEmail(userId, user.name, error, "CNC");
+          await sendUserBotStoppedEmail(user.email, user.name, "CNC");
+        }
       }
     };
 
@@ -924,9 +957,18 @@ export const activateAutoTradeBotCNC = async (req, res) => {
 
     await autoTradeLoop();
 
+    // Save activated bot data
+    await ActivatedBot.create({
+      userId: userId,
+      botId: botId,
+      name: user.name,
+      email: user.email,
+      botType: "CNC",
+    });
+
     return res
       .status(200)
-      .json({ message: "Auto trade bot activated for CNC" });
+      .json({ message: "Auto trade bot activated for CNC", userId });
   } catch (error) {
     console.error("Error activating auto trade bot:", error);
     return res

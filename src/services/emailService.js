@@ -443,25 +443,77 @@ export const sendDailyTopLosers = async (
   await sendEmail(mailOptions);
 };
 
-export const sendCoreEngineEmail = async () => {
+export const sendCoreEngineEmail = async (userId, userName, error, productType) => {
   const mailOptions = {
     from: "info@stockgenius.ai",
     to: ["singharshdeep9039@gmail.com", "manisaikumar321@gmail.com"], // admin email or notification email
-    subject: "Python Server Stopped",
+    subject: `Python Server Stopped - User: ${userName} (ID: ${userId})`,
     text: `
       Dear Admin,
 
-      The Python server for StockGenius has stopped due to an internal error. Please investigate the issue.
+      The Python server for StockGenius encountered an error while processing the request for user: ${userName} (ID: ${userId}). 
+
+      Product Type: ${productType}
+
+      Error Details: ${error.message}
+
+      Response: ${error.response ? JSON.stringify(error.response.data, null, 2) : 'No response data available'}
+      URL: ${error.config ? error.config.url : 'No URL available'}
+
+      Please investigate the issue.
 
       Best regards,
       StockGenius Team
     `,
     html: `
       <p>Dear Admin,</p>
-      <p>The Python server for StockGenius has stopped due to an internal error. Please investigate the issue.</p>
-      <p>Best regards,<br>AI StockGenius Team</p>
+      <p>The Python server for StockGenius encountered an error while processing the request for user: ${userName} (ID: ${userId}).</p>
+      <p><strong>Product Type:</strong> ${productType}</p>
+      <p><strong>Error Details:</strong> ${error.message}</p>
+      <p><strong>Response:</strong> ${error.response ? `<pre>${JSON.stringify(error.response.data, null, 2)}</pre>` : 'No response data available'}</p>
+      <p><strong>URL:</strong> ${error.config ? error.config.url : 'No URL available'}</p>
+      <p>Please investigate the issue.</p>
+      <p>Best regards,<br>StockGenius Team</p>
+    `,
+  };
+
+  try {
+    await sendEmail(mailOptions);
+  } catch (emailError) {
+    console.error('Error sending email notification:', emailError);
+    // Consider logging this error to a file or monitoring system as well
+  }
+};
+
+
+
+
+export const sendUserBotStoppedEmail = async (userEmail, userName, productType) => {
+  const mailOptions = {
+    from: "info@stockgenius.ai",
+    to: userEmail, // User's email
+    subject: "StockGenius: Auto Trading Bot Stopped",
+    text: `
+      Dear ${userName},
+
+      We regret to inform you that your auto trading bot for the product type "${productType}" has stopped due to an internal issue. Please reactivate the bot at your earliest convenience.
+
+      We apologize for the inconvenience and appreciate your understanding.
+
+      Best regards,
+      StockGenius Team
+    `,
+    html: `
+      <p>Dear ${userName},</p>
+      <p>We regret to inform you that your auto trading bot for the product type "<strong>${productType}</strong>" has stopped due to an internal issue. Please reactivate the bot at your earliest convenience.</p>
+      <p>We apologize for the inconvenience and appreciate your understanding.</p>
+      <p>Best regards,<br>StockGenius Team</p>
     `,
   };
 
   await sendEmail(mailOptions);
 };
+
+
+
+

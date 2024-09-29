@@ -4,10 +4,15 @@ const activatedBotSchema = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
-    username: {
+    botId: {
+      type: Schema.Types.ObjectId,
+      ref: "AITradingBot",
+      required: true,
+    },
+    name: {
       type: String,
       required: true,
     },
@@ -17,12 +22,8 @@ const activatedBotSchema = new Schema(
     },
     botType: {
       type: String,
-      enum: ['INTRADAY', 'CNC'],
+      enum: ["INTRADAY", "CNC"],
       required: true,
-    },
-    activationDate: {
-      type: Date,
-      default: Date.now,
     },
   },
   {
