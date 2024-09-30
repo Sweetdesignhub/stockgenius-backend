@@ -32,6 +32,10 @@ const dynamicDataSchema = new Schema({
     type: String,
     default: '0',
   },
+  lastUpdated: {
+    type: Date,
+    default: Date.now
+  },
   totalBalance: {
     type: Number,
     default: 0,
@@ -67,18 +71,18 @@ const dynamicDataSchema = new Schema({
 // Main Bot Schema
 const botSchema = new Schema({
   name: { type: String, required: true },
-  image: { type: String, default:"https://cdn.builder.io/api/v1/image/assets%2F462dcf177d254e0682506e32d9145693%2Fec1600c1a6ac4434aaa71d89b447fec8" },
+  image: { type: String, default: "https://cdn.builder.io/api/v1/image/assets%2F462dcf177d254e0682506e32d9145693%2Fec1600c1a6ac4434aaa71d89b447fec8" },
   profitPercentage: { type: String, required: true },
   riskPercentage: { type: String, required: true },
-  market: { type: String, default:"NSE NIFTY 100" },
-  extraImage: { type: String, default:"https://cdn.builder.io/api/v1/image/assets%2F462dcf177d254e0682506e32d9145693%2Fab3b7e83271a4c3eb160f4e52b6158b4" },
+  market: { type: String, default: "NSE NIFTY 100" },
+  extraImage: { type: String, default: "https://cdn.builder.io/api/v1/image/assets%2F462dcf177d254e0682506e32d9145693%2Fab3b7e83271a4c3eb160f4e52b6158b4" },
   productType: {
     type: String,
     enum: ['INTRADAY', 'CNC'],
     required: true,
   },
   dynamicData: { type: [dynamicDataSchema], required: true }, // Array of dynamic data objects
-  
+
   // Additional fields
   broker: {
     type: String,

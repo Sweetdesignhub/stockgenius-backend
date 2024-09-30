@@ -1,10 +1,10 @@
 import cron from 'node-cron';
 import moment from 'moment-timezone'; // For handling IST
-import axios from 'axios'; 
+import axios from 'axios';
 import AITradingBot from '../models/aiTradingBot.model.js';
 import { endHour, endMin, startHour, startMin } from '../utils/endStartTime.js';
 
-const API_BASE_URL='https://api.stockgenius.ai';
+const API_BASE_URL = 'https://api.stockgenius.ai';
 
 const activateBots = async () => {
   try {
@@ -22,33 +22,33 @@ const activateBots = async () => {
     console.log(botsToActivate);
 
     for (const bot of botsToActivate) {
-        const apiEndpoint = getApiEndpoint('activate', bot);
-      
-        // Extract profitPercentage and riskPercentage from bot
-        const { profitPercentage, riskPercentage } = bot;
-      
-        // Pass profitPercentage and riskPercentage in the payload
-        await axios.post(apiEndpoint, {
-            marginProfitPercentage: profitPercentage,
-            marginLossPercentage: riskPercentage,
-        });
-      
-        // Update the status within the dynamicData array
-        await AITradingBot.updateOne(
-          { _id: bot._id, 'dynamicData._id': bot.dynamicData[0]._id },
-          { 
-            $set: { 
-              'dynamicData.$.status': 'Running',
-              'dynamicData.$.workingTime': '0',
-              'dynamicData.$.todaysBotTime': '0',
-              'dynamicData.$.currentWeekTime': '0'
-            } 
+      const apiEndpoint = getApiEndpoint('activate', bot);
+
+      // Extract profitPercentage and riskPercentage from bot
+      const { profitPercentage, riskPercentage } = bot;
+
+      // Pass profitPercentage and riskPercentage in the payload
+      await axios.post(apiEndpoint, {
+        marginProfitPercentage: profitPercentage,
+        marginLossPercentage: riskPercentage,
+      });
+
+      // Update the status within the dynamicData array
+      await AITradingBot.updateOne(
+        { _id: bot._id, 'dynamicData._id': bot.dynamicData[0]._id },
+        {
+          $set: {
+            'dynamicData.$.status': 'Running',
+            'dynamicData.$.workingTime': '0',
+            'dynamicData.$.todaysBotTime': '0',
+            'dynamicData.$.currentWeekTime': '0'
           }
-        );
-      
-        console.log(`Activated bot with ID: ${bot._id}`);
-      }
-      
+        }
+      );
+
+      console.log(`Activated bot with ID: ${bot._id}`);
+    }
+
   } catch (error) {
     console.error('Error activating bots:', error);
   }
@@ -73,22 +73,22 @@ const deactivateBots = async () => {
       const apiEndpoint = getApiEndpoint('deactivate', bot);
       await axios.patch(apiEndpoint);
 
-            // Fetch the latest bot data to get the current time values
-            const updatedBot = await AITradingBot.findById(bot._id);
-            const finalWorkingTime = updatedBot.dynamicData[0].workingTime;
-            const finalTodaysBotTime = updatedBot.dynamicData[0].todaysBotTime;
-            const finalCurrentWeekTime = updatedBot.dynamicData[0].currentWeekTime;     
+      // Fetch the latest bot data to get the current time values
+      const updatedBot = await AITradingBot.findById(bot._id);
+      const finalWorkingTime = updatedBot.dynamicData[0].workingTime;
+      const finalTodaysBotTime = updatedBot.dynamicData[0].todaysBotTime;
+      const finalCurrentWeekTime = updatedBot.dynamicData[0].currentWeekTime;
 
       // Update the status within the dynamicData array
       await AITradingBot.updateOne(
-        { _id: bot._id, 'dynamicData._id': bot.dynamicData[0]._id }, 
-        { 
-          $set: { 
+        { _id: bot._id, 'dynamicData._id': bot.dynamicData[0]._id },
+        {
+          $set: {
             'dynamicData.$.status': 'Inactive',
             'dynamicData.$.workingTime': finalWorkingTime,
             'dynamicData.$.todaysBotTime': finalTodaysBotTime,
             'dynamicData.$.currentWeekTime': finalCurrentWeekTime
-          } 
+          }
         }
       );
 
@@ -111,15 +111,15 @@ const getApiEndpoint = (action, bot) => {
 
 // Function to start the scheduler
 export default function startBotScheduler() {
-    // Schedule the task to run daily at 9:30 AM IST for activation
-    cron.schedule(`${startMin} ${startHour} * * *`, () => {
-      console.log('Running bot activation task at 9:30 AM IST');
-      activateBots();
-    });
-  
-    // Schedule the task to run daily at 3:30 PM IST for deactivation
-    cron.schedule(`${endMin} ${endHour} * * *`, () => {
-      console.log('Running bot deactivation task at 3:30 PM IST');
-      deactivateBots();
-    });
-  }
+  // Schedule the task to run daily at 9:30 AM IST for activation
+  cron.schedule(`${startMin} ${startHour} * * *`, () => {
+    console.log('Running bot activation task at 9:30 AM IST');
+    activateBots();
+  });
+
+  // Schedule the task to run daily at 3:30 PM IST for deactivation
+  cron.schedule(`${endMin} ${endHour} * * *`, () => {
+    console.log('Running bot deactivation task at 3:30 PM IST');
+    deactivateBots();
+  });
+}

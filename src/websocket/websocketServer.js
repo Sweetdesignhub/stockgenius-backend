@@ -52,9 +52,20 @@ async function sendAllBotsTime(ws) {
     let totalTodaysBotTime = 0;
     let totalCurrentWeekTime = 0;
 
+    const now = moment().tz("Asia/Kolkata");
+    const startOfDay = now.clone().startOf('day');
+    const startOfWeek = now.clone().startOf('isoWeek');
+
     bots.forEach(bot => {
-      totalTodaysBotTime += parseInt(bot.dynamicData[0].todaysBotTime || '0');
-      totalCurrentWeekTime += parseInt(bot.dynamicData[0].currentWeekTime || '0');
+      const botLastUpdated = moment(bot.dynamicData[0].lastUpdated).tz("Asia/Kolkata");
+
+      if (botLastUpdated.isSameOrAfter(startOfDay)) {
+        totalTodaysBotTime += parseInt(bot.dynamicData[0].todaysBotTime || '0');
+      }
+
+      if (botLastUpdated.isSameOrAfter(startOfWeek)) {
+        totalCurrentWeekTime += parseInt(bot.dynamicData[0].currentWeekTime || '0');
+      }
     });
 
     ws.send(JSON.stringify({
@@ -73,27 +84,29 @@ async function updateBotTimes(wss) {
   const startOfWeek = now.clone().startOf('isoWeek');
 
   try {
-    const bots = await AITradingBot.find({ 'dynamicData.status': 'Running' });
+    const bots = await AITradingBot.find();
 
     for (const bot of bots) {
-      if (isWithinTradingHours()) {
+      // Daily reset logic
+      if (now.isSame(startOfDay, 'second')) {
+        bot.dynamicData[0].todaysBotTime = '0';
+      }
+
+      // Weekly reset logic
+      if (now.isSame(startOfWeek, 'second')) {
+        bot.dynamicData[0].currentWeekTime = '0';
+      }
+
+      // If the bot is running and within trading hours, update time
+      if (bot.dynamicData[0].status === 'Running' && isWithinTradingHours()) {
         const workingTime = parseInt(bot.dynamicData[0].workingTime || '0') + 1;
-        const botCreatedAt = moment(bot.createdAt).tz("Asia/Kolkata");
-        
-        let todaysBotTime = parseInt(bot.dynamicData[0].todaysBotTime || '0');
-        let currentWeekTime = parseInt(bot.dynamicData[0].currentWeekTime || '0');
-        
-        if (botCreatedAt.isSame(startOfDay, 'day') || botCreatedAt.isBefore(startOfDay)) {
-          todaysBotTime += 1;
-        }
-        
-        if (botCreatedAt.isSameOrAfter(startOfWeek) || botCreatedAt.isBefore(startOfWeek)) {
-          currentWeekTime += 1;
-        }
+        let todaysBotTime = parseInt(bot.dynamicData[0].todaysBotTime || '0') + 1;
+        let currentWeekTime = parseInt(bot.dynamicData[0].currentWeekTime || '0') + 1;
 
         bot.dynamicData[0].workingTime = workingTime.toString();
         bot.dynamicData[0].todaysBotTime = todaysBotTime.toString();
         bot.dynamicData[0].currentWeekTime = currentWeekTime.toString();
+        bot.dynamicData[0].lastUpdated = now.toDate();
         await bot.save();
 
         wss.clients.forEach((client) => {

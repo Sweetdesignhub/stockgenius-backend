@@ -21,6 +21,7 @@ import {
   isValidPhoneNumber,
 } from '../utils/validators.js';
 import { OAuth2Client } from 'google-auth-library';
+import { v4 as uuidv4 } from 'uuid';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // console.log("google : ", process.env.GOOGLE_CLIENT_ID);
@@ -89,7 +90,7 @@ export const googleAuth = async (req, res, next) => {
     });
 
     // console.log("google : ", process.env.GOOGLE_CLIENT_ID);
-    
+
 
     const payload = ticket.getPayload();
     // console.log(payload);
@@ -99,6 +100,7 @@ export const googleAuth = async (req, res, next) => {
 
     if (!user) {
       const randomPassword = Math.random().toString(36).slice(-8);
+      const uniquePhonePlaceholder = `pending_${uuidv4()}`;
 
       user = new User({
         email,
@@ -107,7 +109,7 @@ export const googleAuth = async (req, res, next) => {
         isEmailVerified: true,
         isPhoneVerified: false,
         password: randomPassword,
-        phoneNumber: 'Pending',
+        phoneNumber: uniquePhonePlaceholder,
         country: country || 'Pending',
         state: state || 'Pending',
       });
@@ -122,7 +124,7 @@ export const googleAuth = async (req, res, next) => {
       }
     }
 
-    if (!user.isPhoneVerified || user.phoneNumber === 'Pending') {
+    if (!user.isPhoneVerified || user.phoneNumber.startsWith('pending_')) {
       return res.status(200).json({
         message: 'Additional information required',
         userId: user._id,
@@ -229,7 +231,7 @@ export const login = async (req, res, next) => {
   const { identifier, password, useOTP } = req.body;
 
   // Check if the identifier is an email or phone number
-  const isEmail = isValidEmail(identifier); 
+  const isEmail = isValidEmail(identifier);
   const isPhone = isValidPhoneNumber(identifier);
 
   if (!isEmail && !isPhone) {
@@ -276,10 +278,10 @@ export const login = async (req, res, next) => {
 
     const accessToken = generateAccessToken(user);
     // console.log(accessToken);
-    
+
     const refreshToken = await generateRefreshToken(user);
     // console.log(refreshToken);
-    
+
 
     res.setHeader('Set-Cookie', [accessToken, refreshToken]);
     res.json({ data: user, message: 'Login successful' });
