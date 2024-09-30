@@ -29,6 +29,8 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const signup = async (req, res, next) => {
   const { email, name, password, phoneNumber, country, state } = req.body;
+  // console.log(email);
+  
 
   if (!isValidEmail(email)) {
     return next(errorHandler(400, 'Invalid email'));
@@ -45,11 +47,14 @@ export const signup = async (req, res, next) => {
   const existingUser = await User.findOne({
     $or: [{ email }, { phoneNumber }],
   });
+
+  // console.log(existingUser);
+  
   if (existingUser) {
-    if (existingUser.isEmailVerified) {
+    if (existingUser.email === email) {
       return next(errorHandler(400, 'Email already in use'));
     }
-    if (existingUser.isPhoneVerified) {
+    if (existingUser.phoneNumber === phoneNumber) {
       return next(errorHandler(400, 'Phone number already in use'));
     }
   }
@@ -72,8 +77,8 @@ export const signup = async (req, res, next) => {
 
   await user.save();
 
-  await sendEmailOTP(email, emailOTP);
-  await sendPhoneOTP(phoneNumber, phoneOTP);
+  await sendEmailOTP(email, emailOTP,name);
+  await sendPhoneOTP(phoneNumber, phoneOTP,name);
 
   res
     .status(201)
@@ -259,10 +264,13 @@ export const login = async (req, res, next) => {
     user.otpExpiry = otpExpiry;
     await user.save();
 
+    const name = user.name.split(" ")[0]; 
+
+
     if (isEmail) {
-      await sendEmailOTP(identifier, otp);
+      await sendEmailOTP(identifier, otp, name);
     } else {
-      await sendPhoneOTP(identifier, otp);
+      await sendPhoneOTP(identifier, otp,name);
     }
 
     return res.json({ message: 'OTP sent for login verification' });

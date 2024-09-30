@@ -23,7 +23,7 @@ export async function createPDF(data) {
     const pdfBytes = await pdfDoc.save();
     const outputPath = './output.pdf';
     fs.writeFileSync(outputPath, pdfBytes);
-    await sendDailyTradesReport('recipient-email@gmail.com', outputPath);
+    // await sendDailyTradesReport('recipient-email@gmail.com', outputPath);
     console.log('Report sent successfully');
   } catch (error) {
     console.log('Failed to create or send report:', error);

@@ -7,8 +7,8 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true },
     password: { type: String, required: true },
     phoneNumber: { type: String, required: true, unique: true },
-    country: { type: String, required: true },
-    state: { type: String, required: true },
+    country: { type: String, required: true ,default: 'Pending' },
+    state: { type: String, required: true ,default: 'Pending' },
     isEmailVerified: { type: Boolean, default: false },
     isPhoneVerified: { type: Boolean, default: false },
     avatar: {

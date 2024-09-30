@@ -5,9 +5,9 @@ const client = twilio(
   process.env.TWILIO_AUTH_TOKEN
 );
 
-export const sendPhoneOTP = async (phoneNumber, otp) => {
+export const sendPhoneOTP = async (phoneNumber, otp, name) => {
   await client.messages.create({
-    body: `Your OTP is ${otp}. It will expire in 10 minutes.`,
+    body: `Dear ${name}, your OTP is ${otp}. It will expire in 10 minutes.`,
     from: process.env.TWILIO_PHONE_NUMBER,
     to: phoneNumber,
   });
