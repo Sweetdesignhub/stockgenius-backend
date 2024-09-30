@@ -53,3 +53,31 @@ export const chunkArray = (array, chunkSize) => {
   }
   return result;
 };
+
+import moment from "moment-timezone";
+
+const startHour = 9;
+const startMin = 15;
+
+const endHour = 22;
+const endMin = 30;
+
+export const isWithinTradingHours = () => {
+  const now = moment().tz("Asia/Kolkata");
+  const day = now.day();
+  const hour = now.hour();
+  const minute = now.minute();
+
+  // Check if it's a weekday (Monday to Friday)
+  if (day >= 1 && day <= 5) {
+    // Check if it's between 9:30 AM and 3:30 PM IST
+    if (
+      (hour > startHour || (hour === startHour && minute >= startMin)) &&
+      (hour < endHour || (hour === endHour && minute <= endMin))
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+};

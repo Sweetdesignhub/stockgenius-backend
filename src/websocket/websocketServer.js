@@ -1,7 +1,7 @@
 import WebSocket from 'ws';
 import moment from 'moment-timezone';
 import AITradingBot from '../models/aiTradingBot.model.js';
-import { isWithinTradingHours } from '../../../stockgenius-frontend/src/utils/helper.js';
+import { isWithinTradingHours } from '../utils/helper.js';
 
 export function setupWebSocket(server) {
   const wss = new WebSocket.Server({ server });
