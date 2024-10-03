@@ -264,7 +264,7 @@ const fetchTopGainersReport = async () => {
 };
 
 const scheduleEmailTopGainer = () => {
-  cron.schedule("0 8 * * *", async () => {
+  cron.schedule("0 9 * * *", async () => {
     try {
       const users = await User.find({}, "email name"); // Fetch all users
       // console.log(users);
@@ -356,7 +356,7 @@ const fetchTopLosersReport = async () => {
 };
 
 const scheduleEmailTopLosers = () => {
-  cron.schedule("0 8 * * *", async () => {
+  cron.schedule("0 9 * * *", async () => {
     try {
       const users = await User.find({}, "email name"); // Fetch all users
       // console.log(users);
