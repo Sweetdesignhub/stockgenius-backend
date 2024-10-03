@@ -11,7 +11,7 @@ import userRoutes from './routes/user.route.js';
 // import authRoutes from './routes/auth.route.js';
 import fyersRoutes from './routes/brokers/fyers/fyers.route.js';
 import authRoutes from './routes/auth.js';
-import  { startReportScheduler,scheduleEmailTopGainer, scheduleEmailTopLosers } from './utils/orderReportGenerator.js';
+import { startReportScheduler, scheduleEmailTopGainer, scheduleEmailTopLosers } from './utils/orderReportGenerator.js';
 import aiTradingBotRoutes from './routes/aiTradingBot.routes.js';
 import startBotScheduler from './services/botScheduler.js';
 
@@ -27,6 +27,7 @@ const allowedOrigins = [
   'https://www.stockgenius.ai',
   'http://localhost:5173',
   'https://stockgenius.ai',
+  'http://127.0.0.1:5173'
 ];
 
 app.use(

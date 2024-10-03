@@ -2,11 +2,29 @@ import WebSocket from 'ws';
 import moment from 'moment-timezone';
 import AITradingBot from '../models/aiTradingBot.model.js';
 import { isWithinTradingHours } from '../utils/helper.js';
+import url from 'url';
+
+const allowedOrigins = [
+  'https://www.stockgenius.ai',
+  'http://localhost:5173',
+  'https://stockgenius.ai',
+  'http://127.0.0.1:5173/'
+];
 
 export function setupWebSocket(server) {
-  const wss = new WebSocket.Server({ server });
+  const wss = new WebSocket.Server({
+    server,
+    verifyClient: (info, callback) => {
+      const origin = info.origin;
+      if (allowedOrigins.includes(origin)) {
+        callback(true);
+      } else {
+        callback(false, 403, 'Forbidden');
+      }
+    }
+  });
 
-  wss.on('connection', (ws) => {
+  wss.on('connection', (ws, req) => {
     console.log('New WebSocket connection');
 
     ws.on('message', async (message) => {
