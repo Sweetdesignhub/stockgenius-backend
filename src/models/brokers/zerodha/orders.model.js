@@ -23,7 +23,11 @@ const orderSchema = new mongoose.Schema(
     averagePrice: { type: Number },
     filledQuantity: { type: Number },
     pendingQuantity: { type: Number },
-    cancelledQuantity: { type: Number }
+    cancelledQuantity: { type: Number },
+    marketProtection: { type: Number },
+    meta: { type: Object },
+    tag: { type: String },
+    guid: { type: String },
   },
   { timestamps: true }
 );

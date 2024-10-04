@@ -40,7 +40,7 @@ const tradeSchema = new mongoose.Schema({
   },
   transaction_type: {
     type: String,
-    enum: ['BUY', 'SELL'], // Assuming trades can be either BUY or SELL
+    enum: ['BUY', 'SELL'],
     required: true,
   },
   fill_timestamp: {
@@ -48,7 +48,7 @@ const tradeSchema = new mongoose.Schema({
     required: true,
   },
   order_timestamp: {
-    type: String, // Keeping it as String to store the time only
+    type: String, 
     required: true,
   },
   exchange_timestamp: {

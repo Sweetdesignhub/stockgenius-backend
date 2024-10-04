@@ -4,7 +4,7 @@ import bcryptjs from "bcryptjs";
 import axios from "axios";
 import { chunkArray, getCurrentTime } from "../utils/helper.js";
 import FyersUserDetail from "../models/brokers/fyers/fyersUserDetail.model.js";
-import { validateOrder } from "../utils/validateOrder.js";
+import { validateFyersOrder } from "../utils/validateFyersOrder.js";
 import {
   sendCoreEngineEmail,
   sendUserBotStoppedEmail,
@@ -213,7 +213,7 @@ export const deleteUser = async (req, res, next) => {
 //             // Validate orders before sending
 //             const validatedOrders = combinedData
 //               .map((order, index) => {
-//                 const { isValid, errors } = validateOrder(order);
+//                 const { isValid, errors } = validateFyersOrder(order);
 //                 if (!isValid) {
 //                   console.log(
 //                     `Order validation failed at index ${index}:`,
@@ -497,7 +497,7 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
           // Validate orders
           const validatedOrders = combinedData
             .map((order, index) => {
-              const { isValid, errors } = validateOrder(order);
+              const { isValid, errors } = validateFyersOrder(order);
               if (!isValid) {
                 console.log(
                   `Order validation failed at index ${index}:`,
@@ -833,7 +833,7 @@ export const activateAutoTradeBotCNC = async (req, res) => {
           // Validate orders
           const validatedOrders = combinedData
             .map((order, index) => {
-              const { isValid, errors } = validateOrder(order);
+              const { isValid, errors } = validateFyersOrder(order);
               if (!isValid) {
                 console.log(
                   `Order validation failed at index ${index}:`,
@@ -1186,7 +1186,7 @@ export const deactivateAutoTradeBotCNC = async (req, res) => {
 //             // Validate orders
 //             const validatedOrders = combinedData
 //               .map((order, index) => {
-//                 const { isValid, errors } = validateOrder(order);
+//                 const { isValid, errors } = validateFyersOrder(order);
 //                 if (!isValid) {
 //                   console.log(
 //                     `Order validation failed at index ${index}:`,

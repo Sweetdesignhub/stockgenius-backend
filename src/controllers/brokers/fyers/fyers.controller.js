@@ -2,7 +2,7 @@ import { fyersModel } from 'fyers-api-v3';
 import fs from 'fs';
 import dotenv from 'dotenv';
 import FyersUserDetail from '../../../models/brokers/fyers/fyersUserDetail.model.js';
-import { validateOrder } from '../../../utils/validateOrder.js';
+import { validateFyersOrder } from '../../../utils/validateFyersOrder.js';
 
 dotenv.config();
 const logsDir = './logs';
@@ -358,7 +358,7 @@ export const placeOrder = async (req, res) => {
   }
 
   // Validate order details
-  const { isValid, errors } = validateOrder(order);
+  const { isValid, errors } = validateFyersOrder(order);
   if (!isValid) {
     console.log('Order validation failed:', errors);
     return res.status(400).json({ errors });
@@ -406,7 +406,7 @@ export const placeMultipleOrders = async (req, res) => {
 
     // Validate each order in the array
     for (const [index, order] of orders.entries()) {
-      const { isValid, errors } = validateOrder(order);
+      const { isValid, errors } = validateFyersOrder(order);
       if (!isValid) {
         console.log(`Order validation failed at index ${index}:`, errors);
         return res

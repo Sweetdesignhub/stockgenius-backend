@@ -1,4 +1,4 @@
-export const validateOrder = (order, index = 0) => {
+export const validateFyersOrder = (order, index = 0) => {
   const requiredFields = [
     "symbol",
     "qty",

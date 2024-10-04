@@ -31,7 +31,10 @@ const ZerodhaUserDetailSchema = new mongoose.Schema(
     authDate: { type: Date, default: Date.now },
     holdings: [holdingsSchema],
     orders: [orderSchema], 
-    positions: [positionSchema],
+    positions: {
+      net: [positionSchema],
+      day: [positionSchema], 
+    },
     trades:[tradeSchema],
     funds: fundsSchema,
   },
