@@ -43,9 +43,7 @@ import {
 import { validateAutoTradeBot } from '../../../middlewares/validateAutoTradeBot.js';
 
 router.get(
-  '/fetchAllFyersUserDetails/:userId',
-  validateAutoTradeBot, verifyUser,
-  fetchAllFyersUserDetails
+  '/fetchAllFyersUserDetails/:userId', verifyUser,fetchAllFyersUserDetails
 );
 router.get('/fundsByUserId/:userId', fetchFundsByUser);
 router.get('/holdingsByUserId/:userId', fetchHoldingsByUser);

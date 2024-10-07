@@ -25,16 +25,6 @@ validateEnvVars();
 const zerodha = new KiteConnect({ api_key: process.env.ZERODHA_API_KEY });
 const ZERODHA_SECRET_KEY = process.env.ZERODHA_SECRET_KEY;
 
-// Helper to generate checksum for Zerodha API request
-const generateChecksum = (requestToken) => {
-  return crypto
-    .createHash("sha256")
-    .update(
-      `${process.env.ZERODHA_API_KEY}${requestToken}${ZERODHA_SECRET_KEY}`
-    )
-    .digest("hex");
-};
-
 // Helper function to update Zerodha user details in the database
 const updateZerodhaUserDetails = async (userId, updateData) => {
   try {
@@ -139,6 +129,8 @@ export const fetchZerodhaProfileAndSave = async (req, res) => {
 
     // Fetch the profile using the SDK
     const profile = await zerodha.getProfile();
+    // console.log(profile);
+    
 
     // Update the database with the profile details
     await ZerodhaUserDetail.findOneAndUpdate(
@@ -192,6 +184,8 @@ export const fetchZerodhaPositionsAndSave = async (req, res) => {
 
     // Fetch positions from Zerodha
     const positionsData = await zerodha.getPositions();
+    // console.log(positionsData);
+    
 
     // Structure positions data for saving and response
     const positions = {
@@ -241,9 +235,11 @@ export const fetchZerodhaHoldingsAndSave = async (req, res) => {
 
     // Call Zerodha API to fetch holdings
     const holdingsData = await zerodha.getHoldings();
+    // console.log(holdingsData);
+    
 
     // Extract holdings from the response
-    const holdings = holdingsData.data || []; // Get the holdings or an empty array
+    const holdings = holdingsData || []; // Get the holdings or an empty array
 
     // Save holdings to the user profile in the database
     const updatedUser = await ZerodhaUserDetail.findOneAndUpdate(
@@ -284,9 +280,11 @@ export const fetchZerodhaOrdersAndSave = async (req, res) => {
 
     // Call Zerodha API to fetch orders
     const ordersData = await zerodha.getOrders();
+    // console.log(ordersData);
+    
 
     // Extract orders from the response
-    const orders = ordersData.data || []; // Get the orders or an empty array
+    const orders = ordersData || []; // Get the orders or an empty array
 
     // Save orders to the user profile in the database
     const updatedUser = await ZerodhaUserDetail.findOneAndUpdate(
@@ -327,9 +325,11 @@ export const fetchZerodhaTradesAndSave = async (req, res) => {
 
     // Call Zerodha API to fetch trades
     const tradesData = await zerodha.getTrades();
+    // console.log(tradesData);
+    
 
     // Extract trades from the response
-    const trades = tradesData.data || []; // Get the trades or an empty array
+    const trades = tradesData || []; // Get the trades or an empty array
 
     // Save trades to the user profile in the database
     const updatedUser = await ZerodhaUserDetail.findOneAndUpdate(
@@ -370,7 +370,7 @@ export const fetchZerodhaFundsAndSave = async (req, res) => {
 
     // Call Zerodha API to fetch funds
     const fundsData = await zerodha.getMargins();
-    console.log(fundsData); // Log the response for debugging
+    // console.log(fundsData); // Log the response for debugging
 
     // Check if the response has data and extract funds
     if (fundsData) {
@@ -408,59 +408,59 @@ export const fetchZerodhaFundsAndSave = async (req, res) => {
   }
 };
 
-// API to place order
+// API to place Zerodha order
 export const placeZerodhaOrder = async (req, res) => {
   const { userId } = req.params;  
   const { order } = req.body;  
 
-  // Validate inputs
+  // Input validation
   if (!userId) {
     return res.status(400).json({ error: 'User ID is required' });
   }
+  
+  if (!order || typeof order !== 'object') {
+    return res.status(400).json({ error: 'Order details are required and should be an object' });
+  }
 
   try {
-    // Fetch the user's Zerodha details using the userId
+    // Fetch user's Zerodha details using userId
     const userDetail = await ZerodhaUserDetail.findOne({ userId });
 
-    // Validate if user exists
     if (!userDetail) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Access token is mandatory to place an order
     const accessToken = userDetail.accessToken;
+
     if (!accessToken) {
       return res.status(400).json({ error: 'Access token is required' });
     }
 
-    // Order object validation
-    if (!order || typeof order !== 'object') {
-      return res.status(400).json({ error: 'Order details are required and should be an object' });
-    }
-
-    // Validating order fields
+    // Validate order details
     const { isValid, errors } = validateZerodhaOrder(order);
-
     if (!isValid) {
       return res.status(400).json({ error: 'Order validation failed', details: errors });
     }
 
-    // Setting access token in Kite SDK (for Zerodha)
+    // Set access token for Kite SDK (Zerodha)
     zerodha.setAccessToken(accessToken);
 
-    // Placing the order using Zerodha API (Kite SDK)
+    // Place order via Zerodha API
     const orderResponse = await zerodha.placeOrder("regular", order);
 
-    // Check the response status and respond accordingly
-    if (orderResponse.status === 'success') {
-      return res.json({ message: "Order placed successfully", order_id: orderResponse.data?.order_id || null });
+    if (orderResponse && orderResponse.order_id) {
+      return res.status(200).json({
+        message: "Order placed successfully",
+        order_id: orderResponse.order_id,
+        success: true
+      });
     } else {
-      return res.status(400).json({ error: orderResponse.message });
+      return res.status(500).json({ error: 'Failed to place the order. Please try again.' });
     }
-
+    
   } catch (error) {
-    console.error("Error placing order:", error);
-    return res.status(500).json({ error: error.message });
+    console.error("Error placing order:", error.message);
+    return res.status(500).json({ error: "Internal server error", details: error.message });
   }
 };
 

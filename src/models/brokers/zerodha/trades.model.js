@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 // Define the Trade schema
 const tradeSchema = new mongoose.Schema({
+  account_id: { type: String, required: true },
   trade_id: {
     type: String,
     required: true,
