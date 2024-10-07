@@ -29,9 +29,30 @@ export function setupWebSocket(server) {
 
     ws.on('message', async (message) => {
       const data = JSON.parse(message);
+
       if (data.type === 'subscribeBotTime') {
-        ws.botId = data.botId;
-        sendBotTime(ws);
+        // Check if bot was created today before establishing connection
+        const bot = await AITradingBot.findById(data.botId);
+        const today = moment().tz("Asia/Kolkata").startOf('day');
+        const botCreatedDate = moment(bot.createdAt).tz("Asia/Kolkata").startOf('day');
+
+        if (botCreatedDate.isSame(today)) {
+          ws.botId = data.botId;
+          sendBotTime(ws);
+        } else {
+          // Send one-time message for non-today bots
+          ws.send(JSON.stringify({
+            type: 'botTime',
+            botId: data.botId,
+            workingTime: bot.dynamicData[0].workingTime,
+            todaysBotTime: '0',
+            currentWeekTime: bot.dynamicData[0].currentWeekTime,
+            status: bot.dynamicData[0].status,
+            isHistorical: true
+          }));
+          // Close connection for non-today bots
+          ws.close();
+        }
       } else if (data.type === 'subscribeAllBotsTime') {
         ws.userId = data.userId;
         sendAllBotsTime(ws);
@@ -66,7 +87,14 @@ async function sendBotTime(ws) {
 
 async function sendAllBotsTime(ws) {
   try {
-    const bots = await AITradingBot.find({ userId: ws.userId });
+    const today = moment().tz("Asia/Kolkata").startOf('day');
+    const bots = await AITradingBot.find({
+      userId: ws.userId,
+      createdAt: {
+        $gte: today.toDate()
+      }
+    });
+
     let totalTodaysBotTime = 0;
     let totalCurrentWeekTime = 0;
 
@@ -76,14 +104,8 @@ async function sendAllBotsTime(ws) {
 
     bots.forEach(bot => {
       const botLastUpdated = moment(bot.dynamicData[0].lastUpdated).tz("Asia/Kolkata");
-
-      if (botLastUpdated.isSameOrAfter(startOfDay)) {
-        totalTodaysBotTime += parseInt(bot.dynamicData[0].todaysBotTime || '0');
-      }
-
-      if (botLastUpdated.isSameOrAfter(startOfWeek)) {
-        totalCurrentWeekTime += parseInt(bot.dynamicData[0].currentWeekTime || '0');
-      }
+      totalTodaysBotTime += parseInt(bot.dynamicData[0].todaysBotTime || '0');
+      totalCurrentWeekTime += parseInt(bot.dynamicData[0].currentWeekTime || '0');
     });
 
     ws.send(JSON.stringify({
@@ -98,23 +120,18 @@ async function sendAllBotsTime(ws) {
 
 async function updateBotTimes(wss) {
   const now = moment().tz("Asia/Kolkata");
-  const startOfDay = now.clone().startOf('day');
+  const today = now.clone().startOf('day');
   const startOfWeek = now.clone().startOf('isoWeek');
 
   try {
-    const bots = await AITradingBot.find();
+    // Only fetch and update bots created today
+    const bots = await AITradingBot.find({
+      createdAt: {
+        $gte: today.toDate()
+      }
+    });
 
     for (const bot of bots) {
-      // Daily reset logic
-      if (now.isSame(startOfDay, 'second')) {
-        bot.dynamicData[0].todaysBotTime = '0';
-      }
-
-      // Weekly reset logic
-      if (now.isSame(startOfWeek, 'second')) {
-        bot.dynamicData[0].currentWeekTime = '0';
-      }
-
       // If the bot is running and within trading hours, update time
       if (bot.dynamicData[0].status === 'Running' && isWithinTradingHours()) {
         const workingTime = parseInt(bot.dynamicData[0].workingTime || '0') + 1;
