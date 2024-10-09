@@ -46,6 +46,8 @@ export const generateZerodhaAuthCodeUrl = async (req, res) => {
     }
 
     const authCodeURL = `https://kite.zerodha.com/connect/login?v=3&api_key=${process.env.ZERODHA_API_KEY}&redirect_uri=${process.env.ZERODHA_REDIRECT_URI}&response_type=code`;
+    console.log(authCodeURL);
+    
 
     await updateZerodhaUserDetails(userId, {
       authCodeURL,
@@ -86,6 +88,9 @@ export const generateZerodhaAccessToken = async (req, res) => {
         console.error("Error generating session:", error);
         return null;
       });
+      console.log("acces token", accessTokenResponse);
+      console.log("acces token", accessTokenResponse.access_token);
+      
 
     if (!accessTokenResponse || !accessTokenResponse.access_token) {
       return res.status(400).json({

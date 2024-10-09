@@ -5,7 +5,7 @@ const orderSchema = new mongoose.Schema(
   {
     account_id: { type: String, required: true },
     placed_by: { type: String, required: true },
-    order_id: { type: String, required: true, unique: true },
+    order_id: { type: String, required: true},
     exchange_order_id: { type: String },
     parent_order_id: { type: String },
     status: { type: String, required: true },
