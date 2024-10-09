@@ -199,7 +199,7 @@ export const sendWelcomeEmail = async (user) => {
       {
         filename: 'welcome.png',
         path: imagePath,
-        cid: 'welcomeImage' 
+        cid: 'welcomeImage'
       }
     ]
   };
@@ -242,8 +242,8 @@ export const sendDailyTradesReport = async (
         <p>🔗 Important Links:</p>
         <ul>
           ${importantLinks
-            .map((link) => `<li><a href="${link}">${link}</a></li>`)
-            .join("")}
+        .map((link) => `<li><a href="${link}">${link}</a></li>`)
+        .join("")}
         </ul>
         <hr />
         <p>Our Mission<br />Whether it’s a day filled with wins or lessons, we’re committed to helping you make the smartest decisions with the power of AI-driven insights. Thanks for trusting Stock Genius.AI to guide your stock journey.</p>
@@ -342,8 +342,8 @@ export const sendDailyTopGainers = async (
         <h4>🔗 Important Links:</h4>
         <ul>
           ${importantLinks
-            .map((link) => `<li><a href="${link}">${link}</a></li>`)
-            .join("")}
+        .map((link) => `<li><a href="${link}">${link}</a></li>`)
+        .join("")}
         </ul>
         <hr/>
         <p>Your Success is Our Mission</p>
@@ -364,7 +364,7 @@ export const sendDailyTopGainers = async (
       },
     ],
   };
-  
+
   // // Log the recipient email before sending
   // console.log(`Sending email to: ${recipientEmail}`);
   // console.log(`Sending filepath: ${filePath}`);
@@ -376,7 +376,7 @@ export const sendDailyTopLosers = async (
   filePath,
   recipientEmail,
   userName,
-  stockSuggestionText, 
+  stockSuggestionText,
   importantLinks = [
     "https://stockgenius.ai/india/dashboard",
     "https://stockgenius.ai/india/NSE100-ai-insights",
@@ -413,8 +413,8 @@ export const sendDailyTopLosers = async (
         <h4>🔗 Important Links:</h4>
         <ul>
           ${importantLinks
-            .map((link) => `<li><a href="${link}">${link}</a></li>`)
-            .join("")}
+        .map((link) => `<li><a href="${link}">${link}</a></li>`)
+        .join("")}
         </ul>
         <hr/>
         <p>Your Success is Our Mission</p>
@@ -435,7 +435,7 @@ export const sendDailyTopLosers = async (
       },
     ],
   };
-  
+
   // Log the recipient email before sending (optional)
   // console.log(`Sending email to: ${recipientEmail}`);
   // console.log(`Sending filepath: ${filePath}`);
@@ -486,34 +486,81 @@ export const sendCoreEngineEmail = async (userId, userName, error, productType) 
 };
 
 
+// export const sendUserBotStoppedEmail = async (userEmail, userName, productType) => {
+//   const mailOptions = {
+//     from: "info@stockgenius.ai",
+//     to: userEmail, // User's email
+//     subject: "StockGenius: Auto Trading Bot Stopped",
+//     text: `
+//       Dear ${userName},
+
+//       We regret to inform you that your auto trading bot for the product type "${productType}" has stopped due to an internal issue. Please reactivate the bot at your earliest convenience.
+
+//       We apologize for the inconvenience and appreciate your understanding.
+
+//       Best regards,
+//       StockGenius Team
+//     `,
+//     html: `
+//       <p>Dear ${userName},</p>
+//       <p>We regret to inform you that your auto trading bot for the product type "<strong>${productType}</strong>" has stopped due to an internal issue. Please reactivate the bot at your earliest convenience.</p>
+//       <p>We apologize for the inconvenience and appreciate your understanding.</p>
+//       <p>Best regards,<br>StockGenius Team</p>
+//     `,
+//   };
+
+//   await sendEmail(mailOptions);
+// };
 
 
 export const sendUserBotStoppedEmail = async (userEmail, userName, productType) => {
+  const imagePath = path.join(__dirname, "../images/Error.png");
+
   const mailOptions = {
     from: "info@stockgenius.ai",
-    to: userEmail, // User's email
-    subject: "StockGenius: Auto Trading Bot Stopped",
-    text: `
-      Dear ${userName},
-
-      We regret to inform you that your auto trading bot for the product type "${productType}" has stopped due to an internal issue. Please reactivate the bot at your earliest convenience.
-
-      We apologize for the inconvenience and appreciate your understanding.
-
-      Best regards,
-      StockGenius Team
-    `,
+    to: userEmail,
+    subject: "⚠️ Oops! We Encountered an Error on Your Account",
     html: `
-      <p>Dear ${userName},</p>
-      <p>We regret to inform you that your auto trading bot for the product type "<strong>${productType}</strong>" has stopped due to an internal issue. Please reactivate the bot at your earliest convenience.</p>
-      <p>We apologize for the inconvenience and appreciate your understanding.</p>
-      <p>Best regards,<br>StockGenius Team</p>
+      <div style="text-align: center;">
+        <img src="cid:stockGeniusErrorLogo" alt="Stock Genius.AI" style="max-width: 100%; height: auto;"/>
+      </div>
+      <div>
+        <h3>Dear ${userName},</h3>
+        
+        <p>We're reaching out to inform you that we encountered an <strong>error</strong> while processing your recent request on <strong>Stock Genius.AI.</strong> We sincerely apologize for any inconvenience this may have caused.</p>
+        
+        <hr/>
+        
+        <h4>What Happened:</h4>
+        <p>It looks like there was an issue with the Auto Trading Bot for your product type <strong>${productType}</strong>. Our team is already on it and working to resolve the issue as quickly as possible.</p>
+        
+        <hr/>
+        
+        <h4>What You Can Do Next:</h4>
+        <ul>
+          <li><strong>Retry the Action:</strong> You may try again in a few minutes. If the problem persists, please reach out to our support team.</li>
+          <li><strong>Contact Support:</strong> If you need immediate assistance, feel free to contact us at info@stockgenius.ai, and we'll be happy to help.</li>
+        </ul>
+        
+        <hr/>
+        
+        <h4>We're Here for You</h4>
+        <p>At <strong>Stock Genius.AI,</strong> we're committed to providing you with the best experience possible, and we take errors like this seriously. Rest assured, we are working hard to ensure everything is back on track quickly.</p>
+        
+        <p>Thank you for your patience and understanding. We'll notify you once the issue is fully resolved.</p>
+        
+        <p><strong>Best regards,</strong><br/>
+        The Stock Genius.AI Team</p>
+      </div>
     `,
+    attachments: [
+      {
+        filename: "Error.png",
+        path: imagePath,
+        cid: "stockGeniusErrorLogo"
+      }
+    ]
   };
 
   await sendEmail(mailOptions);
 };
-
-
-
-

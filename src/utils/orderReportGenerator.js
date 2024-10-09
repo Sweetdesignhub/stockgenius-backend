@@ -9,11 +9,13 @@ import {
   sendNoOrderMessage,
 } from "../services/emailService.js";
 import User from "../models/user.js";
-import s3 from "./aws.js";
+//import s3 from "./aws.js";
 import path from "path";
 import XLSX from "xlsx";
 import ActivatedBot from "../models/activatedBot.model.js";
 import moment from "moment-timezone";
+import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { s3Client } from "./aws.js";
 
 const generatePDF = (orders) => {
   return new Promise((resolve, reject) => {
@@ -228,11 +230,23 @@ const fetchTopGainersReport = async () => {
   };
 
   try {
-    const data = await s3.getObject(params).promise();
-    // console.log(data);
+    // const data = await s3.getObject(params).promise();
+    // // console.log(data);
 
-    const tempFilePath = path.join("/tmp", "top_gainers.xlsx");
-    fs.writeFileSync(tempFilePath, data.Body); // Write to a temporary location
+    // const tempFilePath = path.join("/tmp", "top_gainers.xlsx");
+    // fs.writeFileSync(tempFilePath, data.Body); // Write to a temporary location
+
+    const response = await s3Client.send(new GetObjectCommand(params));
+    const data = await response.Body.transformToByteArray();
+
+    const tempDir = path.join("/tmp"); // Use Linux temp directory
+    // Check if the temporary directory exists; it should exist by default
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true }); // This is typically not needed for /tmp
+    }
+
+    const tempFilePath = path.join(tempDir, "top_losers.xlsx");
+    fs.writeFileSync(tempFilePath, Buffer.from(data)); // Write to a temporary location
 
     // Read the Excel file to extract company names
     const workbook = XLSX.readFile(tempFilePath);
@@ -281,13 +295,12 @@ const scheduleEmailTopGainer = () => {
           const stockSuggestionText = stockSuggestions
             .map((stock, index) => {
               if (!stock) return ""; // Handle empty stock
-              return `[Stock ${index + 1}]: ${stock} - ${
-                index === 0
-                  ? "Keep an eye on this stock, as it’s predicted to rise in the next few days."
-                  : index === 1
+              return `[Stock ${index + 1}]: ${stock} - ${index === 0
+                ? "Keep an eye on this stock, as it’s predicted to rise in the next few days."
+                : index === 1
                   ? "Momentum is building! You might want to consider investing."
                   : "This one’s got long-term potential, especially with the industry showing upward trends."
-              }`;
+                }`;
             })
             .filter(Boolean)
             .join("<br/>"); // Filter out any empty strings and join with line breaks
@@ -320,11 +333,24 @@ const fetchTopLosersReport = async () => {
   };
 
   try {
-    const data = await s3.getObject(params).promise();
-    // console.log(data);
+    // const data = await s3.getObject(params).promise();
+    // // console.log(data);
 
-    const tempFilePath = path.join("/tmp", "top_losers.xlsx"); // Updated file name
-    fs.writeFileSync(tempFilePath, data.Body); // Write to a temporary location
+    // const tempFilePath = path.join("/tmp", "top_losers.xlsx"); // Updated file name
+    // fs.writeFileSync(tempFilePath, data.Body); // Write to a temporary location
+
+    const response = await s3Client.send(new GetObjectCommand(params));
+    const data = await response.Body.transformToByteArray();
+
+    const tempDir = path.join("/tmp"); // Use Linux temp directory
+    // Check if the temporary directory exists; it should exist by default
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true }); // This is typically not needed for /tmp
+    }
+
+    const tempFilePath = path.join(tempDir, "top_losers.xlsx");
+    fs.writeFileSync(tempFilePath, Buffer.from(data)); // Write to a temporary location
+
 
     // Read the Excel file to extract company names
     const workbook = XLSX.readFile(tempFilePath);
@@ -356,7 +382,7 @@ const fetchTopLosersReport = async () => {
 };
 
 const scheduleEmailTopLosers = () => {
-  cron.schedule("0 9 * * *", async () => {
+  cron.schedule("5 9 * * *", async () => {
     try {
       const users = await User.find({}, "email name"); // Fetch all users
       // console.log(users);
@@ -373,13 +399,12 @@ const scheduleEmailTopLosers = () => {
           const stockSuggestionText = stockSuggestions
             .map((stock, index) => {
               if (!stock) return ""; // Handle empty stock
-              return `[Stock ${index + 1}]: ${stock} - ${
-                index === 0
-                  ? "Keep an eye on this stock, as it’s predicted to rise in the next few days."
-                  : index === 1
+              return `[Stock ${index + 1}]: ${stock} - ${index === 0
+                ? "Keep an eye on this stock, as it’s predicted to rise in the next few days."
+                : index === 1
                   ? "Momentum is building! You might want to consider investing."
                   : "This one’s got long-term potential, especially with the industry showing upward trends."
-              }`;
+                }`;
             })
             .filter(Boolean)
             .join("<br/>"); // Filter out any empty strings and join with line breaks
