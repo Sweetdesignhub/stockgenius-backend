@@ -10,6 +10,7 @@ import { apiLimiter } from './middlewares/rateLimiter.js';
 import userRoutes from './routes/user.route.js';
 // import authRoutes from './routes/auth.route.js';
 import fyersRoutes from './routes/brokers/fyers/fyers.route.js';
+import etradeRoutes from './routes/brokers/etrade/etrade.route.js';
 import authRoutes from './routes/auth.js';
 import { startReportScheduler, scheduleEmailTopGainer, scheduleEmailTopLosers } from './utils/orderReportGenerator.js';
 import aiTradingBotRoutes from './routes/aiTradingBot.routes.js';
@@ -55,6 +56,7 @@ app.use((req, res, next) => {
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/fyers', fyersRoutes);
+app.use('/api/v1/etrade', etradeRoutes);
 
 app.use('/api/v1/ai-trading-bots', aiTradingBotRoutes);
 
