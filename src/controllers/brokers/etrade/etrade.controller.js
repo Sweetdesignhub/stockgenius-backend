@@ -1,7 +1,6 @@
 import OAuth from "oauth";
 import dotenv from "dotenv";
 import ETradeUserDetail from "../../../models/brokers/etrade/eTradeUserDetail.model.js";
-import axios from "axios";
 
 dotenv.config();
 
@@ -91,116 +90,40 @@ export const generateAccessToken = async (req, res) => {
   }
 };
 
-// export const fetchProfileAndSave = async (req, res) => {
-//     try {
-//       const { userId } = req.params;
-//       const { accessToken } = req.body;
-  
-//       if (!userId || !accessToken) {
-//         return res.status(400).json({ error: "User ID and Access Token are required" });
-//       }
-  
-//       const url = "https://apisb.etrade.com/v1/accounts/list";
-//       console.log("Starting E*TRADE API request at:", new Date());
-  
-//       const config = {
-//         headers: { Authorization: `Bearer ${accessToken}` },
-//         timeout: 30000, // 30s timeout
-//       };
-  
-//       const response = await axios.get(url, config);
-//       const accountData = response.data;
-  
-//       console.log("Starting database update at:", new Date());
-//       await updateETradeUserDetails(userId, { accountDetails: accountData });
-//       console.log("Database updated at:", new Date());
-  
-//       res.json(accountData);
-//     } catch (error) {
-//       console.error("Error fetching profile:", error);
-//       res.status(500).json({ error: error.message });
-//     }
-//   };
-const fetchWithTimeout = (url, accessToken, timeout = 30000) => {
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        console.error('Request timed out after', timeout, 'ms');
-        reject(new Error('Request timed out'));
-      }, timeout);
-  
-      console.log("Making API request to:", url, "at", new Date());
-      
-      oauth.get(url, accessToken, (error, data, response) => {
-        clearTimeout(timer);
-        console.log("API response received at:", new Date());
-        
-        if (error) {
-          console.error("Error during API call:", error);
-          reject(error);
-        } else {
-          resolve({ data, response });
-        }
-      });
-    });
-  };
-  
-
-const fetchWithRetry = async (url, accessToken, retries = 3, delay = 2000) => {
-    try {
-      const response = await fetchWithTimeout(url, accessToken);
-      
-      if (response.response.statusCode === 500) {
-        const errorData = JSON.parse(response.data);
-        if (errorData.message.includes("maintenance") && retries > 0) {
-          console.log(`Maintenance in progress. Retrying... ${retries} attempts left.`);
-          await new Promise((resolve) => setTimeout(resolve, delay));
-          return fetchWithRetry(url, accessToken, retries - 1, delay * 2); // Exponential backoff
-        } else {
-          throw new Error('Service unavailable. Please try again later.');
-        }
-      }
-  
-      return response;
-    } catch (error) {
-      if (retries > 0) {
-        console.log(`Retrying... ${retries} attempts left.`);
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        return fetchWithRetry(url, accessToken, retries - 1, delay * 2);
-      } else {
-        throw error;
-      }
-    }
-  };
-  
-
+// Controller to fetch and save the user's E*TRADE account profile
 export const fetchProfileAndSave = async (req, res) => {
-    try {
-      const { userId } = req.params;
-      const { accessToken } = req.body;
-  
-      if (!userId || !accessToken) {
-        return res.status(400).json({ error: "User ID and Access Token are required" });
-      }
-  
-      const url = "https://apisb.etrade.com/v1/accounts/list";
-      console.log("Starting E*TRADE API request at:", new Date());
-  
-      const response = await fetchWithRetry(url, accessToken);
-  
-      if (response.response.statusCode === 500) {
-        const errorData = JSON.parse(response.data);
-        return res.status(500).json({ error: "E*TRADE is under maintenance. Please try again later." });
-      }
-  
-      const accountData = JSON.parse(response.data);
-      console.log("Starting database update at:", new Date());
-      await updateETradeUserDetails(userId, { accountDetails: accountData });
-      console.log("Database updated at:", new Date());
-  
-      res.json(accountData);
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      res.status(500).json({ error: error.message });
+  try {
+    const { userId } = req.params;
+    const { accessToken } = req.body;
+
+    if (!userId || !accessToken) {
+      return res.status(400).json({ error: "User ID and Access Token are required" });
     }
-  };
-  
+
+    const url = "https://apisb.etrade.com/v1/accounts/list";
+    console.log("Starting E*TRADE API request at:", new Date());
+    oauth.get(
+      url,
+      accessToken,
+      async (error, data) => {
+        console.log("E*TRADE API responded at:", new Date());
+
+        if (error) {
+          return res.status(500).json({ error: "Error fetching account details" });
+        }
+
+        console.log("data fetched : ", data);
+        
+        const accountData = JSON.parse(data);
+        console.log("Starting database update at:", new Date());
+        await updateETradeUserDetails(userId, { accountDetails: accountData });
+        console.log("Database updated at:", new Date());
+
+        res.json(accountData);
+      }
+    );
+  } catch (error) {
+    console.error("Error fetching profile:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
