@@ -30,7 +30,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 export const signup = async (req, res, next) => {
   const { email, name, password, phoneNumber, country, state } = req.body;
   // console.log(email);
-  
+
 
   if (!isValidEmail(email)) {
     return next(errorHandler(400, 'Invalid email'));
@@ -49,7 +49,7 @@ export const signup = async (req, res, next) => {
   });
 
   // console.log(existingUser);
-  
+
   if (existingUser) {
     if (existingUser.email === email) {
       return next(errorHandler(400, 'Email already in use'));
@@ -77,8 +77,8 @@ export const signup = async (req, res, next) => {
 
   await user.save();
 
-  await sendEmailOTP(email, emailOTP,name);
-  await sendPhoneOTP(phoneNumber, phoneOTP,name);
+  await sendEmailOTP(email, emailOTP, name);
+  await sendPhoneOTP(phoneNumber, phoneOTP, name);
 
   res
     .status(201)
@@ -232,6 +232,76 @@ export const verifyPhone = async (req, res, next) => {
   res.json({ message: 'Phone number verified successfully' });
 };
 
+export const resendEmailOTP = async (req, res, next) => {
+  const { email } = req.body;
+
+  if (!isValidEmail(email)) {
+    return next(errorHandler(400, 'Invalid email address'));
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    return next(errorHandler(404, 'User not found'));
+  }
+
+  if (user.isEmailVerified) {
+    return next(errorHandler(400, 'Email already verified'));
+  }
+
+  // Generate new OTP
+  const newOTP = generateOTP();
+  const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  // Update user document
+  user.emailOTP = newOTP;
+  user.otpExpiry = otpExpiry;
+  await user.save();
+
+  // Send new OTP via email
+  try {
+    await sendEmailOTP(email, newOTP, user.name);
+    res.status(200).json({ message: 'New OTP sent successfully' });
+  } catch (error) {
+    console.error('Error sending email OTP:', error);
+    return next(errorHandler(500, 'Error sending email OTP'));
+  }
+};
+
+export const resendPhoneOTP = async (req, res, next) => {
+  const { phoneNumber } = req.body;
+
+  if (!isValidPhoneNumber(phoneNumber)) {
+    return next(errorHandler(400, 'Invalid phone number'));
+  }
+
+  const user = await User.findOne({ phoneNumber });
+  if (!user) {
+    return next(errorHandler(404, 'User not found'));
+  }
+
+  if (user.isPhoneVerified) {
+    return next(errorHandler(400, 'Phone number already verified'));
+  }
+
+  // Generate new OTP
+  const newOTP = generateOTP();
+  const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  // Update user document
+  user.phoneOTP = newOTP;
+  user.otpExpiry = otpExpiry;
+  await user.save();
+
+  // Send new OTP via SMS
+  try {
+    await sendPhoneOTP(phoneNumber, newOTP, user.name);
+    res.status(200).json({ message: 'New OTP sent successfully' });
+  } catch (error) {
+    console.error('Error sending phone OTP:', error);
+    return next(errorHandler(500, 'Error sending phone OTP'));
+  }
+};
+
 export const login = async (req, res, next) => {
   const { identifier, password, useOTP } = req.body;
 
@@ -264,13 +334,13 @@ export const login = async (req, res, next) => {
     user.otpExpiry = otpExpiry;
     await user.save();
 
-    const name = user.name.split(" ")[0]; 
+    const name = user.name.split(" ")[0];
 
 
     if (isEmail) {
       await sendEmailOTP(identifier, otp, name);
     } else {
-      await sendPhoneOTP(identifier, otp,name);
+      await sendPhoneOTP(identifier, otp, name);
     }
 
     return res.json({ message: 'OTP sent for login verification' });

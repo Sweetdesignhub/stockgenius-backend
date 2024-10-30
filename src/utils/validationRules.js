@@ -1,4 +1,4 @@
-import { body, param, cookie } from 'express-validator';
+import { body, param, cookie, oneOf } from 'express-validator';
 
 export const validateLogin = [
   body('identifier').notEmpty().withMessage('Identifier is required'),
@@ -43,6 +43,15 @@ export const validatePhoneVerification = [
     .isLength({ min: 6, max: 6 })
     .isNumeric()
     .withMessage('OTP must be exactly 6 digits long.'),
+];
+
+export const validateResendOTP = [
+  body('email').optional().isEmail().withMessage('Invalid email address'),
+  body('phoneNumber').optional().isMobilePhone().withMessage('Invalid phone number'),
+  oneOf([
+    body('email').exists(),
+    body('phoneNumber').exists()
+  ], 'Either email or phone number must be provided')
 ];
 
 export const validateForgotPassword = [

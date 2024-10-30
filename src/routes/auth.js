@@ -12,6 +12,8 @@ import {
   googleUpdateUser,
   verifyLoginOTP,
   googleAuth,
+  resendEmailOTP,
+  resendPhoneOTP,
 } from '../controllers/auth.js';
 import { validateRequest } from '../middlewares/validateRequest.js';
 import {
@@ -24,6 +26,7 @@ import {
   validateResetPassword,
   validateResetToken as resetTokenValidation,
   validateRefreshToken,
+  validateResendOTP,
 } from '../utils/validationRules.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { verifyUser } from '../middlewares/verifyUser.js';
@@ -80,6 +83,18 @@ router
     validateRequest,
     asyncHandler(refreshToken)
   )
-  .post('/sign-out', asyncHandler(logout));
+  .post('/sign-out', asyncHandler(logout))
+  .post(
+    '/resend-email-otp',
+    validateResendOTP,
+    validateRequest,
+    asyncHandler(resendEmailOTP)
+  )
+  .post(
+    '/resend-phone-otp',
+    validateResendOTP,
+    validateRequest,
+    asyncHandler(resendPhoneOTP)
+  );
 
 export default router;
