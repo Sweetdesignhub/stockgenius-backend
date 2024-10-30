@@ -3,7 +3,7 @@ import { serialize } from 'cookie';
 import User from '../models/user.js';
 
 export const generateAccessToken = (user) => {
-  const token = jwt.sign({ userId: user._id }, process.env.JWT_ACCESS_SECRET, {
+  const token = jwt.sign({ userId: user._id, isAdmin: user.isAdmin, role:user.role }, process.env.JWT_ACCESS_SECRET, {
     // expiresIn: '1m',
     expiresIn: '24h',
   });
@@ -19,7 +19,7 @@ export const generateAccessToken = (user) => {
 };
 
 export const generateRefreshToken = async (user) => {
-  const token = jwt.sign({ userId: user._id }, process.env.JWT_REFRESH_SECRET, {
+  const token = jwt.sign({ userId: user._id, isAdmin: user.isAdmin , role:user.role }, process.env.JWT_REFRESH_SECRET, {
     expiresIn: '7d',
   });
   user.refreshToken = token;

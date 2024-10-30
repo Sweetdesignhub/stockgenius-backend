@@ -1,5 +1,5 @@
-import mongoose, { Schema } from 'mongoose';
-import bcrypt from 'bcryptjs';
+import mongoose, { Schema } from "mongoose";
+import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema(
   {
@@ -7,14 +7,16 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true },
     password: { type: String, required: true },
     phoneNumber: { type: String, required: true, unique: true },
-    country: { type: String, required: true ,default: 'Pending' },
-    state: { type: String, required: true ,default: 'Pending' },
+    country: { type: String, required: true, default: "Pending" },
+    state: { type: String, required: true, default: "Pending" },
     isEmailVerified: { type: Boolean, default: false },
     isPhoneVerified: { type: Boolean, default: false },
+    isAdmin: { type: Boolean, default: false },
+    role: { type: String, enum: ["user", "admin"], default: "user" },
     avatar: {
       type: String,
       default:
-        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRAd5avdba8EiOZH8lmV3XshrXx7dKRZvhx-A&s',
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRAd5avdba8EiOZH8lmV3XshrXx7dKRZvhx-A&s",
     },
     emailOTP: { type: String },
     phoneOTP: { type: String },
@@ -22,26 +24,26 @@ const userSchema = new mongoose.Schema(
     otpExpiry: { type: Date },
     autoTradeBotINTRADAY: {
       type: String,
-      enum: ['active', 'running', 'inactive', 'stopped'],
-      default: 'inactive',
+      enum: ["active", "running", "inactive", "stopped"],
+      default: "inactive",
       required: true,
     },
     autoTradeBotCNC: {
       type: String,
-      enum: ['active', 'running', 'inactive', 'stopped'],
-      default: 'inactive',
+      enum: ["active", "running", "inactive", "stopped"],
+      default: "inactive",
       required: true,
     },
     refreshToken: { type: String },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
-    fyersUserDetails: { type: Schema.Types.ObjectId, ref: 'FyersUserDetail' },
+    fyersUserDetails: { type: Schema.Types.ObjectId, ref: "FyersUserDetail" },
   },
   { timestamps: true }
 );
 
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });
@@ -50,7 +52,7 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-userSchema.set('toJSON', {
+userSchema.set("toJSON", {
   transform: (document, returnedObject) => {
     returnedObject.id = returnedObject._id.toString();
     delete returnedObject._id;
@@ -60,6 +62,6 @@ userSchema.set('toJSON', {
   },
 });
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
 export default User;
