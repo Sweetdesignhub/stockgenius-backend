@@ -32,6 +32,10 @@ const ipoSuggestionCardSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    graph:{
+      type:String,
+      default:"https://cdn.builder.io/api/v1/image/assets%2F462dcf177d254e0682506e32d9145693%2F441bdc029fa94bc2a826244254476776"
+    },
     chartData: {
       type: [
         {

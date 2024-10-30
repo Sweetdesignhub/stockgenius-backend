@@ -75,11 +75,6 @@ const IPODataSchema = new Schema(
     priceStartRange: { type: String, required: true, trim: true },
     priceEndRange: { type: String, required: true, trim: true },
     minQuantity: { type: Number, required: true, min: 1 },
-    typeBackground: {
-      background: { type: String, required: true, trim: true },
-      borderImageSource: { type: String, required: true, trim: true },
-      boxShadow: { type: String, required: true, trim: true },
-    },
     details: { type: IPODetailsSchema, required: true },
   },
   { timestamps: true }
