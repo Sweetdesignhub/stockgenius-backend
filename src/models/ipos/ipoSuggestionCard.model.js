@@ -49,7 +49,7 @@ const ipoSuggestionCardSchema = new mongoose.Schema(
           },
         },
       ],
-      required: true,
+      // required: true,
     },
   },
   { timestamps: true }

@@ -20,6 +20,8 @@ export const createIPO = async (req, res) => {
 
     // Proceed to create IPO entry
     const ipoData = new IPOData(req.body);
+    console.log(ipoData);
+    
     const savedIPO = await ipoData.save();
 
     // Send success response
