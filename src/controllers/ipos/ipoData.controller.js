@@ -4,8 +4,6 @@ import User from "../../models/user.js";
 
 //create IPO
 export const createIPO = async (req, res) => {
-  console.log("create ipo started");
-  
   const { userId } = req.params; 
 
   try {
