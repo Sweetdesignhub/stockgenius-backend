@@ -43,6 +43,7 @@ app.use(
     credentials: true,
     optionsSuccessStatus: 204,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN', 'X-Requested-With'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   })
 );
 
