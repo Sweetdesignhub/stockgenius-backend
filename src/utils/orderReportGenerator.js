@@ -14,7 +14,7 @@ import path from "path";
 import XLSX from "xlsx";
 import ActivatedBot from "../models/activatedBot.model.js";
 import moment from "moment-timezone";
-import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { s3Client } from "./aws.js";
 
 const generatePDF = (orders) => {

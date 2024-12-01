@@ -3,8 +3,6 @@ import FyersUserDetail from "../models/brokers/fyers/fyersUserDetail.model.js";
 import moment from "moment";
 import AITradingBot from "../models/aiTradingBot.model.js";
 
-console.log("AITradingBot:", AITradingBot);
-
 // Get all bots of all users (admin only)
 export const getAllBots = async (req, res) => {
   try {

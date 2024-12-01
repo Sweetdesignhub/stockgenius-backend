@@ -7,7 +7,8 @@ const allowedOrigins = [
   'https://www.stockgenius.ai',
   'http://localhost:5173',
   'https://stockgenius.ai',
-  'http://127.0.0.1:5173/'
+  'http://127.0.0.1:5173/',
+  'https://main.d25eiqtm1m2vp1.amplifyapp.com'
 ];
 
 export function setupWebSocket(server) {

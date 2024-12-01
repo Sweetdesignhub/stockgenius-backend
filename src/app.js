@@ -34,6 +34,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "https://stockgenius.ai",
   "http://127.0.0.1:5173",
+  'https://main.d25eiqtm1m2vp1.amplifyapp.com'
 ];
 
 app.use(
@@ -41,7 +42,7 @@ app.use(
     origin: allowedOrigins,
     credentials: true,
     optionsSuccessStatus: 204,
-    allowedHeaders: "Content-Type, Authorization",
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN', 'X-Requested-With'],
   })
 );
 
