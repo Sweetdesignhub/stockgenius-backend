@@ -5,6 +5,6 @@ const router = Router();
 
 router.get('/auth/:userId', generateAuthCodeUrl); 
 router.get('/callback', generateAccessToken); 
-router.post('/profile/:userId', fetchProfileAndSave);
+router.get('/profile/:userId', fetchProfileAndSave);
 
 export default router;
