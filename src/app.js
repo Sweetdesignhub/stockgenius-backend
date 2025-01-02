@@ -21,6 +21,10 @@ import ipoDataRoutes from "./routes/ipos/ipoData.route.js";
 import ipoSuggestionCardRoutes from "./routes/ipos/ipoSuggestionCard.route.js";
 import startBotScheduler from "./services/botScheduler.js";
 
+import paperTradesRoutes from "./routes/paperTrading/paperTrade.route.js";
+import processPendingOrders from "./services/paperTrading/processPendingOrders.js";
+import movePositionsToHoldings from "./services/paperTrading/movePositionsToHoldings.js";
+
 dotenv.config();
 
 const app = express();
@@ -34,7 +38,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "https://stockgenius.ai",
   "http://127.0.0.1:5173",
-  'https://main.d25eiqtm1m2vp1.amplifyapp.com'
+  "https://main.d25eiqtm1m2vp1.amplifyapp.com",
 ];
 
 app.use(
@@ -42,8 +46,13 @@ app.use(
     origin: allowedOrigins,
     credentials: true,
     optionsSuccessStatus: 204,
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN', 'X-Requested-With'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-XSRF-TOKEN",
+      "X-Requested-With",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
 );
 
@@ -55,7 +64,6 @@ app.get("/", (req, res) => {
   res.send("Server is running!");
 });
 
-
 // Log requests for debugging
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
@@ -64,7 +72,6 @@ app.use((req, res, next) => {
 
 // Routes declaration
 // app.use('/api', apiLimiter);
-
 
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/auth", authRoutes);
@@ -77,6 +84,9 @@ app.use("/api/v1/ai-trading-bots", aiTradingBotRoutes);
 app.use("/api/v1/IPOs", ipoDataRoutes);
 app.use("/api/v1/IPOs", ipoSuggestionCardRoutes);
 
+//paperTrading
+app.use("/api/v1/paper-trading", paperTradesRoutes);
+
 app.use(errorHandler);
 
 //8am report
@@ -86,5 +96,9 @@ scheduleEmailTopLosers();
 startReportScheduler(); //evening report
 // Start the scheduler for activate and deactivate bot
 startBotScheduler();
+
+//paperTrading
+processPendingOrders();
+
 
 export { app };
