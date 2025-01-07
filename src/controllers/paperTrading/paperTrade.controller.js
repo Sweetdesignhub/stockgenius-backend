@@ -1,6 +1,5 @@
 import PaperTradeData from "../../models/paperTrading/paperTrading.model.js";
 
-
 export const getPaperTradingData = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -21,6 +20,7 @@ export const getPaperTradingData = async (req, res) => {
       positions: paperTradeData.positions || [],
       trades: paperTradeData.trades || [],
       holdings: paperTradeData.holdings || [],
+      orders: paperTradeData.orders || [], // Include orders in the response
     };
 
     // 3. Send Success Response

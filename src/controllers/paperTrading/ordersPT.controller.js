@@ -60,6 +60,7 @@ export const placeOrder = async (req, res) => {
     const currentPrice = await fetchStockPrice(stockSymbol); // Replace with actual real-time price fetching logic
     console.log("CURRENT", currentPrice);
 
+    const numericQuantity = Number(quantity);
     let tradedPrice = null;
     let orderStatus = "PENDING";
 
@@ -101,6 +102,7 @@ export const placeOrder = async (req, res) => {
         funds: {
           totalFunds: 100000, // initial total funds (can be adjusted)
           availableFunds: 100000, // initial available funds (can be adjusted)
+          reservedFunds: 0,
         },
         orders: [],
         positions: {
@@ -113,21 +115,44 @@ export const placeOrder = async (req, res) => {
       });
     }
 
-    const { funds } = paperTradeData;
+    const { funds,positions } = paperTradeData;
     const orderCost =
       quantity * (tradedPrice || limitPrice || stopPrice || currentPrice);
 
-    // 4. Check Available Funds for BUY Orders
-    if (action === "BUY" && orderStatus === "PENDING") {
-      if (funds.availableFunds < orderCost) {
-        return res.status(400).json({
-          success: false,
-          message: "Insufficient funds to place this order",
-        });
-      }
-      funds.availableFunds -= orderCost;
-      funds.reservedFunds += orderCost;
-    }
+    // // 4. Check Available Funds for BUY Orders
+    // if (action === "BUY" && orderStatus === "PENDING") {
+    //   if (funds.availableFunds < orderCost) {
+    //     return res.status(400).json({
+    //       success: false,
+    //       message: "Insufficient funds to place this order",
+    //     });
+    //   }
+    //   funds.availableFunds -= orderCost;
+    //   funds.reservedFunds += orderCost;
+    // }
+
+        // Check sufficient funds for BUY orders
+        if (action === "BUY" && funds.availableFunds < orderCost) {
+          return res.status(400).json({
+            success: false,
+            message: "Insufficient funds to place this BUY order.",
+          });
+        }
+    
+        // Check for short-sell restrictions
+        if (action === "SELL") {
+          const existingNetPosition = positions.netPositions.find(
+            (pos) => pos.stockSymbol === stockSymbol
+          );
+    
+          if (!existingNetPosition || existingNetPosition.quantity < numericQuantity) {
+            return res.status(400).json({
+              success: false,
+              message:
+                "Short-selling is not allowed, or you don't have enough holdings to sell.",
+            });
+          }
+        }
 
     // 5. Create New Order
     const newOrder = {
@@ -180,45 +205,125 @@ export const placeOrder = async (req, res) => {
         (pos) => pos.stockSymbol === stockSymbol
       );
 
+      const numericQuantity = Number(quantity);
+
+      // if (existingNetPosition) {
+      //   if (action === "BUY") {
+      //     // Update position on BUY
+      //     existingNetPosition.buyQty += numericQuantity;
+      //     // console.log("type",typeof existingNetPosition.buyQty);
+      //     // console.log(typeof quantity);
+          
+          
+      //     existingNetPosition.buyAvgPrice =
+      //       (existingNetPosition.buyAvgPrice * existingNetPosition.buyQty +
+      //         tradedPrice * numericQuantity) /
+      //       (existingNetPosition.buyQty + numericQuantity);
+      //     existingNetPosition.quantity += numericQuantity;
+      //   } else if (action === "SELL") {
+      //     // Update position on SELL
+      //     existingNetPosition.sellQty += numericQuantity;
+      //     existingNetPosition.sellAvgPrice =
+      //       (existingNetPosition.sellAvgPrice * existingNetPosition.sellQty +
+      //         tradedPrice * numericQuantity) /
+      //       (existingNetPosition.sellQty + numericQuantity);
+      //     existingNetPosition.quantity -= numericQuantity;
+      //   }
+      // } else if (action === "BUY") {
+      //   // Create a new position in netPositions for BUY orders
+      //   const newNetPosition = {
+      //     stockSymbol,
+      //     exchange,
+      //     quantity: numericQuantity,
+      //     avgPrice: tradedPrice, // Initialize avgPrice for the BUY order
+      //     ltp: currentPrice, // Last traded price at the time of order
+      //     side: "BUY",
+      //     realizedPnL: 0,
+      //     unrealizedPnL: 0,
+      //     buyQty: quantity,
+      //     buyAvgPrice: tradedPrice,
+      //     sellQty: 0,
+      //     sellAvgPrice: 0,
+      //     productType,
+      //   };
+
+      //   // Push new netPosition into positions array
+      //   paperTradeData.positions.netPositions.push(newNetPosition);
+      // }
+
       if (existingNetPosition) {
         if (action === "BUY") {
-          // Update position on BUY
-          existingNetPosition.buyQty += quantity;
+          // Update existing position for BUY
+          existingNetPosition.buyQty += numericQuantity;
           existingNetPosition.buyAvgPrice =
             (existingNetPosition.buyAvgPrice * existingNetPosition.buyQty +
-              tradedPrice * quantity) /
-            (existingNetPosition.buyQty + quantity);
-          existingNetPosition.quantity += quantity;
+              tradedPrice * numericQuantity) /
+            (existingNetPosition.buyQty + numericQuantity);
+          existingNetPosition.quantity += numericQuantity;
         } else if (action === "SELL") {
-          // Update position on SELL
-          existingNetPosition.sellQty += quantity;
+          const prevQuantity = existingNetPosition.quantity;
+
+          existingNetPosition.sellQty += numericQuantity;
           existingNetPosition.sellAvgPrice =
             (existingNetPosition.sellAvgPrice * existingNetPosition.sellQty +
-              tradedPrice * quantity) /
-            (existingNetPosition.sellQty + quantity);
-          existingNetPosition.quantity -= quantity;
+              tradedPrice * numericQuantity) /
+            (existingNetPosition.sellQty + numericQuantity);
+          existingNetPosition.quantity -= numericQuantity;
+
+          // Calculate realized PnL for closing positions
+          if (prevQuantity > 0) {
+            const closingQty = Math.min(numericQuantity, prevQuantity);
+            const pnl = (tradedPrice - existingNetPosition.buyAvgPrice) * closingQty;
+            existingNetPosition.realizedPnL += pnl;
+          }
+
+          // Handle short position if quantity becomes negative
+          if (existingNetPosition.quantity < 0) {
+            existingNetPosition.side = "SELL";
+            existingNetPosition.unrealizedPnL =
+              (existingNetPosition.sellAvgPrice - currentPrice) *
+              Math.abs(existingNetPosition.quantity);
+          }
         }
       } else if (action === "BUY") {
-        // Create a new position in netPositions for BUY orders
+        // No existing position; create a new one for BUY
         const newNetPosition = {
           stockSymbol,
           exchange,
-          quantity,
-          avgPrice: tradedPrice, // Initialize avgPrice for the BUY order
-          ltp: currentPrice, // Last traded price at the time of order
+          quantity: numericQuantity,
+          avgPrice: tradedPrice,
+          ltp: currentPrice,
           side: "BUY",
           realizedPnL: 0,
-          unrealizedPnL: 0,
-          buyQty: quantity,
+          unrealizedPnL: (currentPrice - tradedPrice) * numericQuantity,
+          buyQty: numericQuantity,
           buyAvgPrice: tradedPrice,
           sellQty: 0,
           sellAvgPrice: 0,
           productType,
         };
-
-        // Push new netPosition into positions array
         paperTradeData.positions.netPositions.push(newNetPosition);
-      }
+      } 
+      // else if (action === "SELL") {
+      //   // Create a new short position for SELL
+      //   const newNetPosition = {
+      //     stockSymbol,
+      //     exchange,
+      //     quantity: -numericQuantity,
+      //     avgPrice: tradedPrice,
+      //     ltp: currentPrice,
+      //     side: "SELL",
+      //     realizedPnL: 0,
+      //     unrealizedPnL: (tradedPrice - currentPrice) * numericQuantity,
+      //     buyQty: 0,
+      //     buyAvgPrice: 0,
+      //     sellQty: numericQuantity,
+      //     sellAvgPrice: tradedPrice,
+      //     productType,
+      //   };
+      //   paperTradeData.positions.netPositions.push(newNetPosition);
+      // }
+    
 
       // Update the summary after adding the new position
       paperTradeData.positions.summary = updatePositionSummary(
