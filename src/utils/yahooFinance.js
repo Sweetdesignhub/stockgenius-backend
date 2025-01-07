@@ -3,6 +3,11 @@ import yahooFinance from "yahoo-finance2";
 // Suppress notices from the Yahoo Finance library
 yahooFinance.suppressNotices(['yahooSurvey']);
 
+/**
+ * Fetch real-time stock price for a given stock symbol.
+ * @param {string} stockSymbol - The stock symbol to fetch the price for.
+ * @returns {Promise<number>} - The stock's real-time price or 0 if an error occurs.
+ */
 export const fetchStockPrice = async (stockSymbol) => {
   try {
     console.log(`Fetching real-time price for ticker: ${stockSymbol}`);
@@ -12,8 +17,6 @@ export const fetchStockPrice = async (stockSymbol) => {
 
     // Fetch stock data
     const stockData = await yahooFinance.quote(regionalSymbol);
-
-    // console.log("Full Stock Data Response:", stockData);
 
     // Extract and return the regular market price
     if (stockData && stockData.regularMarketPrice !== undefined) {

@@ -23,7 +23,8 @@ import startBotScheduler from "./services/botScheduler.js";
 
 import paperTradesRoutes from "./routes/paperTrading/paperTrade.route.js";
 import processPendingOrders from "./services/paperTrading/processPendingOrders.js";
-import movePositionsToHoldings from "./services/paperTrading/movePositionsToHoldings.js";
+
+import stockRealTimePrice from './routes/stock.route.js'
 
 dotenv.config();
 
@@ -86,6 +87,9 @@ app.use("/api/v1/IPOs", ipoSuggestionCardRoutes);
 
 //paperTrading
 app.use("/api/v1/paper-trading", paperTradesRoutes);
+
+//fetch real time prize
+app.use("/api/v1/stocks", stockRealTimePrice);
 
 app.use(errorHandler);
 
