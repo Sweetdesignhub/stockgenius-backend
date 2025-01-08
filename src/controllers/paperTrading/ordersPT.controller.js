@@ -138,6 +138,9 @@ export const placeOrder = async (req, res) => {
       if (action === "BUY") {
         funds.availableFunds -= orderCost;
 
+        // Update reserved funds and available funds
+        funds.reservedFunds -= orderCost;
+
         // Update positions
         let existingPosition = positions.netPositions.find(
           pos => pos.stockSymbol === stockSymbol
@@ -191,7 +194,13 @@ export const placeOrder = async (req, res) => {
         if (remainingQuantityToSell > 0) {
           const holding = holdings.holdings.find(h => h.stockSymbol === stockSymbol);
           if (holding) {
+            // Proportional adjustment for investedValue
+            const avgPrice = holding.investedValue / holding.quantity;
+            const sellValue = remainingQuantityToSell * avgPrice;
+        
             holding.quantity -= remainingQuantityToSell;
+            holding.investedValue -= sellValue; // Adjust invested value proportionally
+        
             if (holding.quantity <= 0) {
               holdings.holdings = holdings.holdings.filter(
                 h => h.stockSymbol !== stockSymbol
@@ -199,8 +208,9 @@ export const placeOrder = async (req, res) => {
             }
           }
         }
+        
 
-        funds.availableFunds += orderCost;
+        funds.availableFunds += orderCost; // Add the sell value to available funds
       }
 
       // Add New Trade
