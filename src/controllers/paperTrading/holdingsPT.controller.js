@@ -42,7 +42,7 @@ export const sellHoldings = async (req, res) => {
     }
 
     // Find holdings
-    const holding = paperTradeData.holdings.find(
+    const holding = paperTradeData.holdings.holdings.find(
       (h) => h.stockSymbol === stockSymbol
     );
 
