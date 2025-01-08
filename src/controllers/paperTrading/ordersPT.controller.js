@@ -207,50 +207,6 @@ export const placeOrder = async (req, res) => {
 
       const numericQuantity = Number(quantity);
 
-      // if (existingNetPosition) {
-      //   if (action === "BUY") {
-      //     // Update position on BUY
-      //     existingNetPosition.buyQty += numericQuantity;
-      //     // console.log("type",typeof existingNetPosition.buyQty);
-      //     // console.log(typeof quantity);
-          
-          
-      //     existingNetPosition.buyAvgPrice =
-      //       (existingNetPosition.buyAvgPrice * existingNetPosition.buyQty +
-      //         tradedPrice * numericQuantity) /
-      //       (existingNetPosition.buyQty + numericQuantity);
-      //     existingNetPosition.quantity += numericQuantity;
-      //   } else if (action === "SELL") {
-      //     // Update position on SELL
-      //     existingNetPosition.sellQty += numericQuantity;
-      //     existingNetPosition.sellAvgPrice =
-      //       (existingNetPosition.sellAvgPrice * existingNetPosition.sellQty +
-      //         tradedPrice * numericQuantity) /
-      //       (existingNetPosition.sellQty + numericQuantity);
-      //     existingNetPosition.quantity -= numericQuantity;
-      //   }
-      // } else if (action === "BUY") {
-      //   // Create a new position in netPositions for BUY orders
-      //   const newNetPosition = {
-      //     stockSymbol,
-      //     exchange,
-      //     quantity: numericQuantity,
-      //     avgPrice: tradedPrice, // Initialize avgPrice for the BUY order
-      //     ltp: currentPrice, // Last traded price at the time of order
-      //     side: "BUY",
-      //     realizedPnL: 0,
-      //     unrealizedPnL: 0,
-      //     buyQty: quantity,
-      //     buyAvgPrice: tradedPrice,
-      //     sellQty: 0,
-      //     sellAvgPrice: 0,
-      //     productType,
-      //   };
-
-      //   // Push new netPosition into positions array
-      //   paperTradeData.positions.netPositions.push(newNetPosition);
-      // }
-
       if (existingNetPosition) {
         if (action === "BUY") {
           // Update existing position for BUY
@@ -304,6 +260,9 @@ export const placeOrder = async (req, res) => {
         };
         paperTradeData.positions.netPositions.push(newNetPosition);
       } 
+
+      //check holdings, if stock is present then only sell 
+      
       // else if (action === "SELL") {
       //   // Create a new short position for SELL
       //   const newNetPosition = {

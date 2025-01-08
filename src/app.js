@@ -25,6 +25,7 @@ import paperTradesRoutes from "./routes/paperTrading/paperTrade.route.js";
 import processPendingOrders from "./services/paperTrading/processPendingOrders.js";
 
 import stockRealTimePrice from './routes/stock.route.js'
+import movePositionsToHoldings from "./services/paperTrading/movePositionsToHoldings.js";
 
 dotenv.config();
 
@@ -102,7 +103,9 @@ startReportScheduler(); //evening report
 startBotScheduler();
 
 //paperTrading
-processPendingOrders();
+// processPendingOrders();
+
+movePositionsToHoldings()
 
 
 export { app };
