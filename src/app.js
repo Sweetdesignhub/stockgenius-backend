@@ -21,6 +21,8 @@ import ipoDataRoutes from "./routes/ipos/ipoData.route.js";
 import ipoSuggestionCardRoutes from "./routes/ipos/ipoSuggestionCard.route.js";
 import startBotScheduler from "./services/botScheduler.js";
 
+import autoTradeBotRoutes from "./routes/autoTradeBot/bot.route.js";
+
 import paperTradesRoutes from "./routes/paperTrading/paperTrade.route.js";
 import processPendingOrders from "./services/paperTrading/processPendingOrders.js";
 
@@ -86,6 +88,9 @@ app.use("/api/v1/ai-trading-bots", aiTradingBotRoutes);
 app.use("/api/v1/IPOs", ipoDataRoutes);
 app.use("/api/v1/IPOs", ipoSuggestionCardRoutes);
 
+//autotradebot
+app.use("/api/v1/autotrade-bots", autoTradeBotRoutes);
+
 //paperTrading
 app.use("/api/v1/paper-trading", paperTradesRoutes);
 
@@ -105,7 +110,7 @@ startBotScheduler();
 //paperTrading
 // processPendingOrders();
 
-movePositionsToHoldings()
+// movePositionsToHoldings()
 
 
 export { app };

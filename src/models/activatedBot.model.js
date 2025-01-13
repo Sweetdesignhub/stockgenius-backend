@@ -25,6 +25,11 @@ const activatedBotSchema = new Schema(
       enum: ["INTRADAY", "CNC"],
       required: true,
     },
+    broker: {
+      type: String,
+      default: "PaperTrading",
+      enum: ["PaperTrading", "Fyers", "Zerodha", "Upstox", "Others"],
+    },
   },
   {
     timestamps: true,

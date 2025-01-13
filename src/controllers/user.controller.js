@@ -1289,3 +1289,19 @@ export const fetchAllUsersWithAutoTradeBot = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+//auto trade bot with paper trading
+
+
+export const fetchAllUsersWithAutoTradeBotPaperTrading = async (req, res) => {
+  try {
+    const users = await User.find({ autoTradeBot: "active" }).populate(
+      "fyersUserDetails"
+    );
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
