@@ -1,8 +1,9 @@
-import User from "../models/user.js";
+
 import moment from "moment";
 import Bot from "../../models/autoTradeBot/bot.model.js";
 import FyersUserDetail from "../../models/brokers/fyers/fyersUserDetail.model.js";
 import mongoose from "mongoose";
+import User from "../../models/user.js";
 
 // Get all bots of all users (admin only)
 export const getAllBots = async (req, res) => {
@@ -13,7 +14,7 @@ export const getAllBots = async (req, res) => {
         .status(403)
         .json({ message: "Access denied. Admin privileges required." });
     }
-    const bots = await AITradingBot.find().populate("userId", "username email");
+    const bots = await Bot.find().populate("userId", "username email");
     res.json(bots);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -103,7 +104,7 @@ export const createBot = async (req, res) => {
 
     // Check if a bot with the same name or product type exists for today
     const today = moment().startOf("day").toDate();
-    const existingBot = await AITradingBot.findOne({
+    const existingBot = await Bot.findOne({
       userId,
       $or: [
         { name, createdAt: { $gte: today } },

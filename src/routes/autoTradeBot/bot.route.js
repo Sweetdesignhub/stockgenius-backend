@@ -15,7 +15,7 @@ const router = Router();
 router.get("/bots", getAllBots);
 
 // Create a new AI trading bot
-router.post("/bots/:userId", verifyUser, createBot);
+router.post("/createBot/:userId", verifyUser, createBot);
 
 // Get all AI trading bots for a user
 router.get("/bots/user/:userId", getBotsByUserId);
@@ -24,7 +24,7 @@ router.get("/bots/user/:userId", getBotsByUserId);
 router.get("/bots/:botId/user/:userId", getBotById);
 
 // Update an existing AI trading bot
-router.put("/bots/:userId/:botId", updateBot);
+router.put("/users/:userId/bots/:botId", updateBot);
 
 // Delete an AI trading bot
 router.delete("/bots/:botId", deleteBot);

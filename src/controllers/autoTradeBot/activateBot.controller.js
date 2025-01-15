@@ -124,13 +124,13 @@ export const activateAutoTradeBotCNC = async (req, res) => {
           // Fetch decisions and reinvestment data
           // Call the Python server
           const pythonServerUrl =
-            "http://ec2-13-232-40-122.ap-south-1.compute.amazonaws.com:8000/autoTradingActivated_CNC";
+            "http://13.201.115.151:8000/autoTrading/paperTrading/CNC";
           const response = await axios.post(pythonServerUrl, {
             userId,
             marginProfit,
             marginLoss,
             accessToken,
-            broker
+            // broker
           });
           const decisions = response.data[0].decision;
           const reinvestmentData = response.data[1].reinvestment;
