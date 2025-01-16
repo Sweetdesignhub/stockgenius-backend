@@ -511,7 +511,7 @@ export const sendDailyTopLosers = async (
 export const sendCoreEngineEmail = async (userId, userName, error, productType) => {
   const mailOptions = {
     from: "info@stockgenius.ai",
-    to: ["singharshdeep9039@gmail.com", "manisaikumar321@gmail.com"], // admin email or notification email
+    to: ["singharshdeep9039@gmail.com"], // admin email or notification email
     subject: `Python Server Stopped - User: ${userName} (ID: ${userId})`,
     text: `
       Dear Admin,

@@ -24,6 +24,7 @@ import startBotScheduler from "./services/botScheduler.js";
 import autoTradeBotRoutes from "./routes/autoTradeBot/bot.route.js";
 
 import paperTradesRoutes from "./routes/paperTrading/paperTrade.route.js";
+import activateBotRoutes from './routes/autoTradeBot/activateBot.route.js'
 import processPendingOrders from "./services/paperTrading/processPendingOrders.js";
 
 import stockRealTimePrice from './routes/stock.route.js'
@@ -81,7 +82,7 @@ app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/fyers", fyersRoutes);
 
-//aitradingbot
+//aitradingbot CRUD old
 app.use("/api/v1/ai-trading-bots", aiTradingBotRoutes);
 
 //ipo
@@ -91,8 +92,11 @@ app.use("/api/v1/IPOs", ipoSuggestionCardRoutes);
 //autotradebot
 app.use("/api/v1/autotrade-bots", autoTradeBotRoutes);
 
-//paperTrading
+//paperTrading CRUD BOT latest
 app.use("/api/v1/paper-trading", paperTradesRoutes);
+
+//activateBots
+app.use("/api/v1/activateBot", activateBotRoutes);
 
 //fetch real time prize
 app.use("/api/v1/stocks", stockRealTimePrice);

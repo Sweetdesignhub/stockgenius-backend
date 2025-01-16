@@ -1,4 +1,4 @@
-import  { Schema } from "mongoose";
+import { Schema } from "mongoose";
 
 const OrdersSchema = new Schema(
   {
@@ -64,6 +64,10 @@ const OrdersSchema = new Schema(
       type: Number,
       default: 0, // Optional: Quantity to disclose publicly
     },
+    autoTrade: {
+      type: Boolean,
+      default: false, // Indicates whether the order is part of auto-trade
+    },
   },
   { timestamps: true }
 );
@@ -85,6 +89,5 @@ OrdersSchema.pre("save", function (next) {
 
   next();
 });
-
 
 export default OrdersSchema;

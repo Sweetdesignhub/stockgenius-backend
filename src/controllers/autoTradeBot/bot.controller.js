@@ -380,7 +380,9 @@ export const deleteBot = async (req, res) => {
   try {
     const botId = req.params.botId;
 
-    if (!req.bot) {
+    // Check if the bot exists
+    const bot = await Bot.findById(botId);
+    if (!bot) {
       return res.status(404).json({ message: "Bot not found" });
     }
 

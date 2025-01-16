@@ -8,6 +8,7 @@ import {
   updateBot,
 } from "../../controllers/autoTradeBot/bot.controller.js";
 import { verifyUser } from "../../middlewares/verifyUser.js";
+import { activateAutoTradeBotCNC } from "../../controllers/autoTradeBot/activateBot.controller.js";
 
 const router = Router();
 
@@ -28,5 +29,13 @@ router.put("/users/:userId/bots/:botId", updateBot);
 
 // Delete an AI trading bot
 router.delete("/bots/:botId", deleteBot);
+
+
+//activate bot
+router.post(
+  "/:userId/autoTradeBotCNC/activate/bots/:botId",
+  // verifyUser,
+  activateAutoTradeBotCNC
+);
 
 export default router;

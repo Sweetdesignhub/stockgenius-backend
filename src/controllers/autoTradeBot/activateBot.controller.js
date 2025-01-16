@@ -1,12 +1,39 @@
+import ActivatedBot from "../../models/activatedBot.model.js";
 import Bot from "../../models/autoTradeBot/bot.model.js";
 import FyersUserDetail from "../../models/brokers/fyers/fyersUserDetail.model.js";
 import User from "../../models/user.js";
-import { sendCoreEngineEmail, sendUserBotStoppedEmail } from "../../services/emailService";
+import {
+  sendCoreEngineEmail,
+  sendUserBotStoppedEmail,
+} from "../../services/emailService.js";
+import {
+  endHour,
+  endMin,
+  startHour,
+  startMin,
+} from "../../utils/endStartTime.js";
 import { getCurrentTime } from "../../utils/helper.js";
 import { placeOrder } from "../paperTrading/ordersPT.controller.js";
+import axios from "axios";
+
+const API_BASE_URL = "https://api.stockgenius.ai";
+
+const TIME_CONDITION_START =
+  `${startHour.toString().padStart(2, "0")}:${startMin
+    .toString()
+    .padStart(2, "0")}` || "09:15";
+
+const TIME_CONDITION_END =
+  `${endHour.toString().padStart(2, "0")}:${endMin
+    .toString()
+    .padStart(2, "0")}` || "15:30";
 
 const activeIntervals = {
   cnc: {},
+};
+
+const axiosConfig = {
+  timeout: 30000,
 };
 
 // for cnc market
@@ -125,15 +152,20 @@ export const activateAutoTradeBotCNC = async (req, res) => {
           // Call the Python server
           const pythonServerUrl =
             "http://13.201.115.151:8000/autoTrading/paperTrading/CNC";
-          const response = await axios.post(pythonServerUrl, {
-            userId,
-            marginProfit,
-            marginLoss,
-            accessToken,
-            // broker
-          });
+          const response = await axios.post(
+            pythonServerUrl,
+            {
+              userId,
+              marginProfit,
+              marginLoss,
+            },
+            axiosConfig
+          );
           const decisions = response.data[0].decision;
           const reinvestmentData = response.data[1].reinvestment;
+
+          console.log("Decisions",decisions);
+          console.log("reinvestment tickers",reinvestmentData);
 
           // Combine decisions and reinvestment data
           const combinedData = [
@@ -165,6 +197,7 @@ export const activateAutoTradeBotCNC = async (req, res) => {
               stopPrice: 0,
               productType: "CNC",
               exchange: "NSE", // Assuming NSE, adjust if necessary
+              autoTrade: true,
             };
 
             // Place the order
@@ -175,7 +208,8 @@ export const activateAutoTradeBotCNC = async (req, res) => {
             "Orders placed successfully in paper trading environment"
           );
         } else if (broker === "Fyers") {
-            const accessToken = broker === 'Fyers' ? brokerUserDetails.accessToken : null;
+          const accessToken =
+            broker === "Fyers" ? brokerUserDetails.accessToken : null;
 
           // Fetch latest positions and save
           const positionAndSaveUrl = `${API_BASE_URL}/api/v1/fyers/fetchPositionsAndSave/${userId}`;
@@ -224,7 +258,7 @@ export const activateAutoTradeBotCNC = async (req, res) => {
             marginProfit,
             marginLoss,
             accessToken,
-            broker
+            broker,
           });
 
           if (response.data && Array.isArray(response.data)) {
@@ -363,7 +397,7 @@ export const activateAutoTradeBotCNC = async (req, res) => {
           delete activeIntervals.cnc[userId];
         }
 
-        const bot = await AITradingBot.findOne({ _id: botId, userId });
+        const bot = await Bot.findOne({ _id: botId, userId });
         // console.log(bot);
 
         if (!bot) {
@@ -377,8 +411,8 @@ export const activateAutoTradeBotCNC = async (req, res) => {
             await bot.save();
             console.log("bot status ot inactive");
           }
-          await sendCoreEngineEmail(userId, user.name, error, "CNC");
-          await sendUserBotStoppedEmail(user.email, user.name, "CNC");
+          // await sendCoreEngineEmail(userId, user.name, error, "CNC");
+          // await sendUserBotStoppedEmail(user.email, user.name, "CNC");
         }
       }
     };
@@ -392,7 +426,13 @@ export const activateAutoTradeBotCNC = async (req, res) => {
       clearInterval(activeIntervals.cnc[userId]);
     }
 
-    activeIntervals.cnc[userId] = setInterval(autoTradeLoop, 15 * 1000);
+    // Determine interval duration based on broker type
+    const intervalDuration = broker === "PaperTrading" ? 40 * 1000 : 15 * 1000;
+
+    // Set the interval for the auto trade loop
+    activeIntervals.cnc[userId] = setInterval(autoTradeLoop, intervalDuration);
+
+    // activeIntervals.cnc[userId] = setInterval(autoTradeLoop, 40 * 1000);
     console.log("Auto-trade loop started with interval of 15 seconds");
 
     await autoTradeLoop();
