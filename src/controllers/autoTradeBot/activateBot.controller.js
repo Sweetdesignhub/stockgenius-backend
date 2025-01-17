@@ -2,6 +2,7 @@ import ActivatedBot from "../../models/activatedBot.model.js";
 import Bot from "../../models/autoTradeBot/bot.model.js";
 import FyersUserDetail from "../../models/brokers/fyers/fyersUserDetail.model.js";
 import User from "../../models/user.js";
+import { validateOrder } from "../../utils/validateOrder.js";
 import {
   sendCoreEngineEmail,
   sendUserBotStoppedEmail,
@@ -184,29 +185,28 @@ export const activateAutoTradeBotCNC = async (req, res) => {
           ];
 
           // Process each order for paper trading
-          for (const order of combinedData) {
+          const orderPromises = combinedData.map(async (order) => {
             const { stockSymbol, quantity, action } = order;
 
-            // Use your existing placeOrder logic
             const orderDetails = {
               stockSymbol,
               action,
-              orderType: "MARKET", // Assuming market orders for simplicity, adjust if needed
+              orderType: "MARKET",
               quantity,
               limitPrice: 0,
               stopPrice: 0,
               productType: "CNC",
-              exchange: "NSE", // Assuming NSE, adjust if necessary
+              exchange: "NSE",
               autoTrade: true,
             };
 
             // Place the order
-            await placeOrder({ body: orderDetails, params: { userId } }, res);
-          }
+            return await placeOrder({ body: orderDetails, params: { userId } }, res);
+          });
 
-          console.log(
-            "Orders placed successfully in paper trading environment"
-          );
+          // Wait for all orders to be placed
+          const orderResults = await Promise.all(orderPromises);
+          console.log("Orders placed successfully:", orderResults);
         } else if (broker === "Fyers") {
           const accessToken =
             broker === "Fyers" ? brokerUserDetails.accessToken : null;

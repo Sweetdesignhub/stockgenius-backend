@@ -243,6 +243,44 @@ export const placeOrder = async (req, res) => {
   }
 };
 
+export const placeMultipleOrders = async (req, res) => {
+  const userId = req.params.userId;
+  const tickers = req.body.tickers;
+
+  try {
+    const orderPromises = tickers.map(ticker => {
+      const orderDetails = {
+        stockSymbol: ticker.Symbol,
+        action: ticker.Decision,
+        orderType: 'MARKET',
+        quantity: ticker.Quantity,
+        limitPrice: undefined,
+        stopPrice: undefined,
+        productType: 'CNC',
+        exchange: 'NSE',
+      };
+
+      return placeOrder({ body: orderDetails, params: { userId } }, res);
+    });
+
+    const results = await Promise.all(orderPromises);
+
+    res.status(200).json({
+      success: true,
+      message: 'All orders processed',
+      results,
+    });
+
+  } catch (error) {
+    console.error('Error placing orders:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to place one or more orders',
+    });
+  }
+};
+
+
 
 export const modifyOrder = async (req, res) => {
   const { userId, orderId } = req.params;
