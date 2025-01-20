@@ -444,7 +444,7 @@ export const activateAutoTradeBotINTRADAY = async (req, res) => {
 
         // Call the Python server
         const pythonServerUrl =
-          "http://ec2-13-232-40-122.ap-south-1.compute.amazonaws.com:8000/autoTradingActivated_INTRADAY";
+          "http://13.201.115.151:8000/autoTrading/fyers/Intraday";
         const response = await axios.post(pythonServerUrl, {
           userId,
           marginProfit,
@@ -780,7 +780,7 @@ export const activateAutoTradeBotCNC = async (req, res) => {
 
         // Call the Python server
         const pythonServerUrl =
-          "http://ec2-13-232-40-122.ap-south-1.compute.amazonaws.com:8000/autoTradingActivated_CNC";
+          "http://13.201.115.151:8000/autoTrading/fyers/CNC";
         const response = await axios.post(pythonServerUrl, {
           userId,
           marginProfit,
@@ -1293,15 +1293,6 @@ export const fetchAllUsersWithAutoTradeBot = async (req, res) => {
 //auto trade bot with paper trading
 
 
-export const fetchAllUsersWithAutoTradeBotPaperTrading = async (req, res) => {
-  try {
-    const users = await User.find({ autoTradeBot: "active" }).populate(
-      "fyersUserDetails"
-    );
-    res.status(200).json(users);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+
 
 

@@ -4,6 +4,7 @@ import { getFunds } from "../../controllers/paperTrading/fundsPT.controller.js";
 import {
   getAllOrders,
   modifyOrder,
+  placeMultipleOrders,
   placeOrder,
 } from "../../controllers/paperTrading/ordersPT.controller.js";
 import {
@@ -23,6 +24,11 @@ router.get("/data/:userId", getPaperTradingData);
 
 // Place a new order
 router.post("/orders/place/:userId", placeOrder);
+
+// Place a multiple order
+router.post("/orders/placeMultipleOrders/:userId", placeMultipleOrders);
+
+
 // Modify an existing order (only if status is PENDING)
 router.put("/orders/modify/:userId/:orderId", modifyOrder);
 // Get all orders for a specific user

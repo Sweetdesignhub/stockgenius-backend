@@ -232,11 +232,12 @@ export const placeOrder = async (req, res) => {
 
     await paperTradeData.save();
 
-    res.status(201).json({
-      success: true,
-      message: "Order placed successfully",
-      data: paperTradeData,
-    });
+    // res.status(201).json({
+    //   success: true,
+    //   message: "Order placed successfully",
+    //   data: paperTradeData,
+    // });
+    return newOrder;
   } catch (error) {
     console.error("Error placing order:", error);
     res.status(500).json({ success: false, message: "Internal Server Error" });
@@ -245,41 +246,229 @@ export const placeOrder = async (req, res) => {
 
 export const placeMultipleOrders = async (req, res) => {
   const userId = req.params.userId;
-  const tickers = req.body.tickers;
+  const { orders } = req.body;
 
   try {
-    const orderPromises = tickers.map(ticker => {
-      const orderDetails = {
-        stockSymbol: ticker.Symbol,
-        action: ticker.Decision,
-        orderType: 'MARKET',
-        quantity: ticker.Quantity,
-        limitPrice: undefined,
-        stopPrice: undefined,
-        productType: 'CNC',
-        exchange: 'NSE',
-      };
+    // Validate request body
+    if (!Array.isArray(orders) || orders.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or empty orders array.",
+      });
+    }
 
-      return placeOrder({ body: orderDetails, params: { userId } }, res);
-    });
+    const results = [];
+    let hasError = false;
 
-    const results = await Promise.all(orderPromises);
+    for (const order of orders) {
+      try {
+        const {
+          stockSymbol,
+          action,
+          orderType,
+          quantity,
+          limitPrice,
+          stopPrice,
+          productType,
+          exchange,
+        } = order;
 
-    res.status(200).json({
-      success: true,
-      message: 'All orders processed',
+        // Reuse the logic from the single order placement function
+        const currentPrice = await fetchStockPrice(stockSymbol); // Replace with real-time price fetching logic
+        const numericQuantity = Number(quantity);
+        let tradedPrice = null;
+        let orderStatus = "PENDING";
+
+        if (orderType === "MARKET") {
+          tradedPrice = currentPrice;
+          orderStatus = "EXECUTED";
+        } else if (orderType === "LIMIT") {
+          if (action === "BUY" && limitPrice >= currentPrice) {
+            tradedPrice = limitPrice;
+            orderStatus = "EXECUTED";
+          } else if (action === "SELL" && limitPrice <= currentPrice) {
+            tradedPrice = limitPrice;
+            orderStatus = "EXECUTED";
+          }
+        } else if (orderType === "STOP_LOSS" && currentPrice >= stopPrice) {
+          tradedPrice = stopPrice;
+          orderStatus = "EXECUTED";
+        }
+
+        let paperTradeData = await PaperTradeData.findOne({ userId });
+
+        if (!paperTradeData) {
+          paperTradeData = new PaperTradeData({
+            userId,
+            funds: { totalFunds: 100000, availableFunds: 100000, reservedFunds: 0 },
+            orders: [],
+            positions: { netPositions: [], summary: {} },
+            trades: [],
+            holdings: { holdings: [] },
+            riskProfile: "moderate",
+            currency: "INR",
+          });
+        }
+
+        const { funds, positions, holdings } = paperTradeData;
+        const orderCost = numericQuantity * (tradedPrice || currentPrice);
+
+        // BUY Validation
+        if (action === "BUY" && funds.availableFunds < orderCost) {
+          throw new Error("Insufficient funds for this BUY order.");
+        }
+
+        // SELL Validation: Prevent Short Selling
+        if (action === "SELL") {
+          const position = positions.netPositions.find(p => p.stockSymbol === stockSymbol);
+          const holding = holdings.holdings.find(h => h.stockSymbol === stockSymbol);
+
+          // Calculate total available quantity for SELL
+          const availableQuantity = (position?.quantity || 0) + (holding?.quantity || 0);
+
+          if (availableQuantity < numericQuantity) {
+            throw new Error("Insufficient quantity to SELL. Short selling is not allowed.");
+          }
+        }
+
+        // Create New Order
+        const newOrder = {
+          stockSymbol,
+          action,
+          orderType,
+          quantity,
+          limitPrice: orderType === "LIMIT" ? limitPrice : undefined,
+          filledQuantity: orderStatus === "EXECUTED" ? numericQuantity : 0,
+          tradedPrice: tradedPrice || 0,
+          status: orderStatus,
+          productType,
+          exchange,
+          virtualOrderId: uuidv4(),
+        };
+
+        paperTradeData.orders.push(newOrder);
+
+        // Handle Executed Orders
+        if (orderStatus === "EXECUTED") {
+          if (action === "BUY") {
+            funds.availableFunds -= orderCost;
+
+            // Update positions
+            let existingPosition = positions.netPositions.find(
+              pos => pos.stockSymbol === stockSymbol
+            );
+
+            if (existingPosition) {
+              existingPosition.buyQty += numericQuantity;
+              existingPosition.avgPrice =
+                (existingPosition.avgPrice * existingPosition.quantity +
+                  tradedPrice * numericQuantity) /
+                (existingPosition.quantity + numericQuantity);
+              existingPosition.quantity += numericQuantity;
+            } else {
+              positions.netPositions.push({
+                stockSymbol,
+                exchange,
+                quantity: numericQuantity,
+                avgPrice: tradedPrice,
+                ltp: currentPrice,
+                side: "BUY",
+                realizedPnL: 0,
+                unrealizedPnL: (currentPrice - tradedPrice) * numericQuantity,
+                buyQty: numericQuantity,
+                buyAvgPrice: tradedPrice,
+                sellQty: 0,
+                sellAvgPrice: 0,
+                productType,
+              });
+            }
+          } else if (action === "SELL") {
+            let remainingQuantityToSell = numericQuantity;
+
+            // Deduct from positions first
+            const position = positions.netPositions.find(
+              pos => pos.stockSymbol === stockSymbol
+            );
+            if (position) {
+              const sellableFromPosition = Math.min(remainingQuantityToSell, position.quantity);
+              position.sellQty += sellableFromPosition;
+              position.quantity -= sellableFromPosition;
+              remainingQuantityToSell -= sellableFromPosition;
+
+              if (position.quantity <= 0) {
+                positions.netPositions = positions.netPositions.filter(
+                  pos => pos.stockSymbol !== stockSymbol
+                );
+              }
+            }
+
+            // Deduct remaining from holdings
+            if (remainingQuantityToSell > 0) {
+              const holding = holdings.holdings.find(h => h.stockSymbol === stockSymbol);
+              if (holding) {
+                const avgPrice = holding.investedValue / holding.quantity;
+                const sellValue = remainingQuantityToSell * avgPrice;
+
+                holding.quantity -= remainingQuantityToSell;
+                holding.investedValue -= sellValue;
+
+                if (holding.quantity <= 0) {
+                  holdings.holdings = holdings.holdings.filter(
+                    h => h.stockSymbol !== stockSymbol
+                  );
+                }
+              }
+            }
+
+            funds.availableFunds += orderCost; // Add the sell value to available funds
+          }
+
+          // Add New Trade
+          const newTrade = {
+            stockSymbol,
+            side: action,
+            quantity: numericQuantity,
+            price: tradedPrice,
+            tradeValue: orderCost,
+            tradeNumber: uuidv4(),
+            orderType,
+            productType,
+            fees: 0,
+          };
+          paperTradeData.trades.push(newTrade);
+
+          paperTradeData.positions.summary = updatePositionSummary(positions);
+        }
+
+        await paperTradeData.save();
+
+        results.push({
+          success: true,
+          stockSymbol,
+          action,
+          orderType,
+          message: "Order placed successfully.",
+        });
+      } catch (error) {
+        hasError = true;
+        results.push({
+          success: false,
+          stockSymbol: order?.stockSymbol,
+          message: error.message || "Error processing order.",
+        });
+      }
+    }
+
+    res.status(hasError ? 207 : 201).json({
+      success: !hasError,
+      message: hasError ? "Some orders failed to process." : "All orders placed successfully.",
       results,
     });
-
   } catch (error) {
-    console.error('Error placing orders:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to place one or more orders',
-    });
+    console.error("Error processing multiple orders:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
-
 
 
 export const modifyOrder = async (req, res) => {

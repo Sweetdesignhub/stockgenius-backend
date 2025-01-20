@@ -96,7 +96,7 @@ app.use("/api/v1/autotrade-bots", autoTradeBotRoutes);
 app.use("/api/v1/paper-trading", paperTradesRoutes);
 
 //activateBots
-app.use("/api/v1/activateBot", activateBotRoutes);
+app.use("/api/v1/autoTradeBot", activateBotRoutes);
 
 //fetch real time prize
 app.use("/api/v1/stocks", stockRealTimePrice);
