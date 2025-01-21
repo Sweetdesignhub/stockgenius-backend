@@ -79,7 +79,7 @@ export const placeOrder = async (req, res) => {
     if (!paperTradeData) {
       paperTradeData = new PaperTradeData({
         userId,
-        funds: { totalFunds: 100000, availableFunds: 100000, reservedFunds: 0 },
+        funds: { totalFunds: 2000000, availableFunds: 2000000, reservedFunds: 0 },
         orders: [],
         positions: { netPositions: [], summary: {} },
         trades: [],
@@ -300,7 +300,7 @@ export const placeMultipleOrders = async (req, res) => {
         if (!paperTradeData) {
           paperTradeData = new PaperTradeData({
             userId,
-            funds: { totalFunds: 100000, availableFunds: 100000, reservedFunds: 0 },
+            funds: { totalFunds: 2000000, availableFunds: 2000000, reservedFunds: 0 },
             orders: [],
             positions: { netPositions: [], summary: {} },
             trades: [],
