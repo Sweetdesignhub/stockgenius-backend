@@ -34,6 +34,12 @@ const userSchema = new mongoose.Schema(
       default: "inactive",
       required: true,
     },
+    autoTradeBotPaperTradingCNC: {
+      type: String,
+      enum: ["active", "running", "inactive", "stopped"],
+      default: "inactive",
+      required: true,
+    },
     refreshToken: { type: String },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },

@@ -29,6 +29,7 @@ import processPendingOrders from "./services/paperTrading/processPendingOrders.j
 
 import stockRealTimePrice from './routes/stock.route.js'
 import movePositionsToHoldings from "./services/paperTrading/movePositionsToHoldings.js";
+import startBotSchedulerPT from "./services/paperTrading/paperTradingBotScheduler.js";
 
 dotenv.config();
 
@@ -110,6 +111,9 @@ scheduleEmailTopLosers();
 startReportScheduler(); //evening report
 // Start the scheduler for activate and deactivate bot
 startBotScheduler();
+
+// Start the scheduler for activate and deactivate bot for papertrading
+startBotSchedulerPT();
 
 //paperTrading
 // processPendingOrders();
