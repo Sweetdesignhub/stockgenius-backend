@@ -54,10 +54,10 @@ const validateUserAndBot = async (userId, botId) => {
 };
 
 // Helper: Check time validity
-// const isWithinTradingHours = () => {
-//   const currentTime = getCurrentTime();
-//   return currentTime >= TIME_CONDITION_START && currentTime <= TIME_CONDITION_END;
-// };
+const isWithinTradingHours = () => {
+  const currentTime = getCurrentTime();
+  return currentTime >= TIME_CONDITION_START && currentTime <= TIME_CONDITION_END;
+};
 
 // Helper: Fetch decisions and reinvestment data
 const fetchTradingData = async (userId, marginProfit, marginLoss) => {
@@ -132,11 +132,11 @@ export const activateAutoTradeBotCNC = async (req, res) => {
     console.log(bot.dynamicData[0].status);
 
     // Check trading hours
-    // if (!isWithinTradingHours()) {
-    //   return res.status(400).json({
-    //     message: "Auto trading can only be activated between 9:15 AM and 3:30 PM",
-    //   });
-    // }
+    if (!isWithinTradingHours()) {
+      return res.status(400).json({
+        message: "Auto trading can only be activated between 9:15 AM and 3:30 PM",
+      });
+    }
 
     // Set bot to active
     user.autoTradeBotPaperTradingCNC = "active";
@@ -157,13 +157,13 @@ export const activateAutoTradeBotCNC = async (req, res) => {
           return;
         }
 
-        // if (!isWithinTradingHours()) {
-        //   user.autoTradeBotPaperTradingCNC = "inactive";
-        //   await user.save();
-        //   clearInterval(activeIntervals.cnc[userId]);
-        //   delete activeIntervals.cnc[userId];
-        //   return;
-        // }
+        if (!isWithinTradingHours()) {
+          user.autoTradeBotPaperTradingCNC = "inactive";
+          await user.save();
+          clearInterval(activeIntervals.cnc[userId]);
+          delete activeIntervals.cnc[userId];
+          return;
+        }
 
         const [decisions, reinvestmentData] = await fetchTradingData(
           userId,
