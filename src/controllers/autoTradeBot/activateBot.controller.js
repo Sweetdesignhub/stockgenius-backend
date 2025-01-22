@@ -11,7 +11,7 @@ import {
   startHour,
   startMin,
 } from "../../utils/endStartTime.js";
-import { getCurrentTime, isWithinTradingHours } from "../../utils/helper.js";
+import { isWithinTradingHours } from "../../utils/helper.js";
 import { placeOrderBot } from "../paperTrading/ordersPT.controller.js";
 import axios from "axios";
 
@@ -51,12 +51,6 @@ const validateUserAndBot = async (userId, botId) => {
   if (!bot) throw new Error("Auto trade bot not found");
 
   return { user, bot };
-};
-
-// Helper: Check time validity
-const isWithinTradingHours = () => {
-  const currentTime = getCurrentTime();
-  return currentTime >= TIME_CONDITION_START && currentTime <= TIME_CONDITION_END;
 };
 
 // Helper: Fetch decisions and reinvestment data
