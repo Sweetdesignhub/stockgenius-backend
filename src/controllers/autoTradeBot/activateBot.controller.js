@@ -132,11 +132,11 @@ export const activateAutoTradeBotCNC = async (req, res) => {
     console.log(bot.dynamicData[0].status);
 
     // Check trading hours
-    if (!isWithinTradingHours()) {
-      return res.status(400).json({
-        message: "Auto trading can only be activated between 9:15 AM and 3:30 PM",
-      });
-    }
+    // if (!isWithinTradingHours()) {
+    //   return res.status(400).json({
+    //     message: "Auto trading can only be activated between 9:15 AM and 3:30 PM",
+    //   });
+    // }
 
     // Set bot to active
     user.autoTradeBotPaperTradingCNC = "active";
@@ -157,13 +157,13 @@ export const activateAutoTradeBotCNC = async (req, res) => {
           return;
         }
 
-        if (!isWithinTradingHours()) {
-          user.autoTradeBotPaperTradingCNC = "inactive";
-          await user.save();
-          clearInterval(activeIntervals.cnc[userId]);
-          delete activeIntervals.cnc[userId];
-          return;
-        }
+        // if (!isWithinTradingHours()) {
+        //   user.autoTradeBotPaperTradingCNC = "inactive";
+        //   await user.save();
+        //   clearInterval(activeIntervals.cnc[userId]);
+        //   delete activeIntervals.cnc[userId];
+        //   return;
+        // }
 
         const [decisions, reinvestmentData] = await fetchTradingData(
           userId,
@@ -241,23 +241,27 @@ export const deactivateAutoTradeBotCNC = async (req, res) => {
   }
 
   try {
-    // Find the user
+    // Fetch the user
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Validate if the bot exists
+    // Fetch the bot
     const bot = await Bot.findOne({ _id: botId, userId });
     if (!bot) {
       return res.status(404).json({ message: "Auto trade bot not found" });
     }
 
-    // If the bot is scheduled or the auto-trade loop is not running, allow deactivation
-    if (bot.status === "Schedule" || !activeIntervals.cnc[userId]) {
-      // Stop the interval loop if it's running
+    // Debug logs
+    console.log("Bot status:", bot.dynamicData[0].status);
+    console.log("Active interval:", activeIntervals.cnc[userId]);
+
+    // Allow deactivation if bot is scheduled or loop is not running
+    if (bot.dynamicData[0].status === "Schedule" || activeIntervals.cnc[userId]) {
+      // Stop the loop if active
       if (activeIntervals.cnc[userId]) {
-        console.log("Stopping auto-trade loop for user:", userId);
+        console.log("Stopping active auto-trade loop for user:", userId);
         clearInterval(activeIntervals.cnc[userId]);
         delete activeIntervals.cnc[userId];
       }
@@ -266,23 +270,19 @@ export const deactivateAutoTradeBotCNC = async (req, res) => {
       user.autoTradeBotPaperTradingCNC = "stopped";
       await user.save();
 
-      // Set the bot's dynamic data status to "Inactive"
-      if (bot.productType === "CNC") {
-        const latestDynamicData = bot.dynamicData[0];
-        if (latestDynamicData) {
-          latestDynamicData.status = "Inactive";
-          await bot.save();
-        }
+      // Update dynamic data status
+      if (bot.dynamicData.length > 0) {
+        bot.dynamicData[0].status = "Stopped";
+        await bot.save();
       }
 
-      // Log and respond
       console.log("Auto-trade bot deactivated successfully for user:", userId);
       return res.status(200).json({
         message: "Auto-trade bot deactivated successfully",
       });
     }
 
-    // If the bot is neither scheduled nor active, throw an error
+    // Error: Bot is neither scheduled nor active
     return res.status(400).json({
       message: "Auto-trade bot is not currently active or scheduled",
     });
@@ -291,6 +291,7 @@ export const deactivateAutoTradeBotCNC = async (req, res) => {
     return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 
 // for cnc market
