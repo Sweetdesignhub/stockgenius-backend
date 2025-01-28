@@ -65,7 +65,7 @@ const fetchTradingData = async (userId, marginProfit, marginLoss) => {
   return response.data;
 };
 
-// Helper: Process and place orders sequentially
+// Helper: Process and place orders
 const processAndPlaceOrders = async (
   userId,
   decisions,
@@ -87,7 +87,8 @@ const processAndPlaceOrders = async (
     })),
   ];
 
-  for (const order of combinedData) {
+  // Place orders
+  const orderPromises = combinedData.map(async (order) => {
     const { stockSymbol, quantity, action } = order;
 
     const orderDetails = {
@@ -102,27 +103,10 @@ const processAndPlaceOrders = async (
       autoTrade: true,
     };
 
-    await placeOrderBot({ body: orderDetails, params: { userId } }, res);
-  }
-};
+    return await placeOrderBot({ body: orderDetails, params: { userId } }, res);
+  });
 
-// Helper: Save document with retry logic
-const saveDocumentWithRetry = async (document, maxRetries = 3) => {
-  let retries = 0;
-  while (retries < maxRetries) {
-    try {
-      await document.save();
-      return;
-    } catch (error) {
-      if (error.name === "VersionError" && retries < maxRetries) {
-        retries++;
-        console.log(`Retrying save... Attempt ${retries}`);
-        await document.constructor.findById(document._id); // Refresh document
-      } else {
-        throw error;
-      }
-    }
-  }
+  return await Promise.all(orderPromises);
 };
 
 // Main Function
@@ -142,44 +126,38 @@ export const activateAutoTradeBotCNC = async (req, res) => {
     console.log(bot.dynamicData[0].status);
 
     // Check trading hours
-    if (!isWithinTradingHours()) {
-      return res.status(400).json({
-        message: "Auto trading can only be activated between 9:15 AM and 3:30 PM",
-      });
-    }
+    // if (!isWithinTradingHours()) {
+    //   return res.status(400).json({
+    //     message: "Auto trading can only be activated between 9:15 AM and 3:30 PM",
+    //   });
+    // }
 
     // Set bot to active
     user.autoTradeBotPaperTradingCNC = "active";
-    await saveDocumentWithRetry(user);
+
+    await user.save();
 
     bot.dynamicData[0].status = "Running";
-    await saveDocumentWithRetry(bot);
+    await bot.save();
 
     // Auto-trade loop function
     const autoTradeLoop = async () => {
-      if (activeIntervals.cnc[userId].isRunning) {
-        console.log("Skipping loop execution as the previous iteration is still running");
-        return;
-      }
-
-      activeIntervals.cnc[userId].isRunning = true;
-
       try {
         const updatedUser = await User.findById(userId);
 
         if (updatedUser.autoTradeBotPaperTradingCNC !== "active") {
-          clearInterval(activeIntervals.cnc[userId].interval);
+          clearInterval(activeIntervals.cnc[userId]);
           delete activeIntervals.cnc[userId];
           return;
         }
 
-        if (!isWithinTradingHours()) {
-          user.autoTradeBotPaperTradingCNC = "inactive";
-          await saveDocumentWithRetry(user);
-          clearInterval(activeIntervals.cnc[userId].interval);
-          delete activeIntervals.cnc[userId];
-          return;
-        }
+        // if (!isWithinTradingHours()) {
+        //   user.autoTradeBotPaperTradingCNC = "inactive";
+        //   await user.save();
+        //   clearInterval(activeIntervals.cnc[userId]);
+        //   delete activeIntervals.cnc[userId];
+        //   return;
+        // }
 
         const [decisions, reinvestmentData] = await fetchTradingData(
           userId,
@@ -190,37 +168,37 @@ export const activateAutoTradeBotCNC = async (req, res) => {
         console.log("decisions for papertrading", decisions);
         console.log("reinvestment for papertrading", reinvestmentData);
 
-        await processAndPlaceOrders(
+        const orderResults = await processAndPlaceOrders(
           userId,
           decisions.decision,
           reinvestmentData.reinvestment,
           res
         );
+
+        console.log("Orders processed:", orderResults);
       } catch (error) {
         console.error("Error in auto-trade loop:", error);
-        clearInterval(activeIntervals.cnc[userId].interval);
+        clearInterval(activeIntervals.cnc[userId]);
         delete activeIntervals.cnc[userId];
         user.autoTradeBotPaperTradingCNC = "inactive";
-        await saveDocumentWithRetry(user);
+        await user.save();
 
         bot.dynamicData[0].status = "Stopped";
-        await saveDocumentWithRetry(bot);
+        await bot.save();
 
         await sendCoreEngineEmail(userId, user.name, error, "PaperTrading");
         await sendUserBotStoppedEmail(user.email, user.name, "paperTrading");
-      } finally {
-        activeIntervals.cnc[userId].isRunning = false;
       }
     };
 
     // Start interval
     if (activeIntervals.cnc[userId]) {
-      clearInterval(activeIntervals.cnc[userId].interval);
+      clearInterval(activeIntervals.cnc[userId]);
     }
-    activeIntervals.cnc[userId] = {
-      interval: setInterval(autoTradeLoop, INTERVAL_DURATION_MS),
-      isRunning: false,
-    };
+    activeIntervals.cnc[userId] = setInterval(
+      autoTradeLoop,
+      INTERVAL_DURATION_MS
+    );
 
     console.log("Auto-trade loop started for user:", userId);
 
@@ -246,7 +224,6 @@ export const activateAutoTradeBotCNC = async (req, res) => {
       .json({ message: "Server error", error: error.message });
   }
 };
-
 
 export const deactivateAutoTradeBotCNC = async (req, res) => {
   const { userId, botId } = req.params;

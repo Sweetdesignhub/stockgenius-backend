@@ -29,7 +29,9 @@ import processPendingOrders from "./services/paperTrading/processPendingOrders.j
 
 import stockRealTimePrice from './routes/stock.route.js'
 import movePositionsToHoldings from "./services/paperTrading/movePositionsToHoldings.js";
-import startBotSchedulerPT from "./services/paperTrading/paperTradingBotScheduler.js";
+// import startBotSchedulerPT from "./services/paperTrading/paperTradingBotScheduler.js";
+import User from "./models/user.js";
+import Bot from "./models/autoTradeBot/bot.model.js";
 
 dotenv.config();
 
@@ -113,12 +115,62 @@ startReportScheduler(); //evening report
 startBotScheduler();
 
 // Start the scheduler for activate and deactivate bot for papertrading
-startBotSchedulerPT();
+// startBotSchedulerPT();
 
 //paperTrading
 // processPendingOrders();
 
 // movePositionsToHoldings()
 
+//script to create papertrade default bot
+
+// const createDefaultBotsForExistingUsers = async () => {
+//   try {
+//     const users = await User.find(); // Fetch all users
+
+//     for (const user of users) {
+//       // Check if the user already has a default bot
+//       const existingBot = await Bot.findOne({ userId: user._id, isDefault: true });
+
+//       if (!existingBot) {
+//         try {
+//           // Create a default bot if none exists
+//           await Bot.create({
+//             userId: user._id,
+//             name: 'Default PaperTradeBot', // Corrected field
+//             profitPercentage: '5', // Profit Percentage as a string
+//             riskPercentage: '2', // Risk Percentage as a string
+//             productType: 'CNC',
+//             isDefault: true,
+//             broker: 'PaperTrading',
+//             dynamicData: [
+//               {
+//                 tradeRatio: 50,
+//                 profitGained: 0,
+//                 workingTime: "0",
+//                 todaysBotTime: "0",
+//                 currentWeekTime: "0",
+//                 totalBalance: 0,
+//                 status: 'Inactive',
+//                 limits: 0,
+//               },
+//             ],
+//           });
+
+//           console.log(`Default bot created for user: ${user._id}`);
+//         } catch (botError) {
+//           console.error(`Error creating bot for user ${user._id}:`, botError.message);
+//         }
+//       } else {
+//         console.log(`Default bot already exists for user: ${user._id}`);
+//       }
+//     }
+//   } catch (error) {
+//     console.error('Error fetching users or creating bots:', error.message);
+//   }
+// };
+
+// // Run the script
+// createDefaultBotsForExistingUsers();
 
 export { app };

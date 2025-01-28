@@ -103,6 +103,10 @@ const botSchema = new Schema(
       ref: "User",
       required: true,
     },
+    isDefault: {
+      type: Boolean,
+      default: false, 
+    },
   },
   {
     timestamps: true,
@@ -110,5 +114,5 @@ const botSchema = new Schema(
 );
 
 // Export the model
-const Bot = model("Bot", botSchema);
+const Bot = model("PaperTradeBot", botSchema);
 export default Bot;
