@@ -395,3 +395,46 @@ export const deleteBot = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Toggle bot activation for a specific user
+export const toggleBotActivation = async (req, res) => {
+  const { botId, userId } = req.params; // Bot ID and User ID from request parameters
+
+  console.log(botId);
+  
+
+  try {
+    // Validate userId
+    if (!userId) {
+      return res.status(400).json({
+        message: "User ID is required.",
+      });
+    }
+
+    // Find the bot by ID and match it with the userId
+    const bot = await Bot.findOne({ _id: botId, userId });
+
+    if (!bot) {
+      return res.status(404).json({ message: "Bot not found or does not belong to this user." });
+    }
+
+    // Toggle the isActive field
+    bot.isActive = !bot.isActive;
+
+    // Save the updated bot
+    await bot.save();
+
+    res.status(200).json({
+      message: `Bot has been ${bot.isActive ? "activated" : "deactivated"}`,
+      bot,
+    });
+  } catch (error) {
+    console.error("Error toggling bot activation:", error);
+
+    res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+

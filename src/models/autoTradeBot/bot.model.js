@@ -66,6 +66,7 @@ const dynamicDataSchema = new Schema({
     default: 0,
     required: true,
   },
+
 });
 
 // Main Bot Schema
@@ -106,6 +107,10 @@ const botSchema = new Schema(
     isDefault: {
       type: Boolean,
       default: false, 
+    },
+    isActive: {
+      type: Boolean,
+      default: false,
     },
   },
   {

@@ -5,6 +5,7 @@ import {
   getAllBots,
   getBotById,
   getBotsByUserId,
+  toggleBotActivation,
   updateBot,
 } from "../../controllers/autoTradeBot/bot.controller.js";
 import { verifyUser } from "../../middlewares/verifyUser.js";
@@ -31,11 +32,15 @@ router.put("/users/:userId/bots/:botId", updateBot);
 router.delete("/bots/:botId", deleteBot);
 
 
-//activate bot
+
 router.post(
   "/:userId/autoTradeBotCNC/activate/bots/:botId",
   // verifyUser,
   activateAutoTradeBotCNC
 );
+
+
+//activate bot => isActive
+router.patch("/users/:userId/bots/:botId/activate", toggleBotActivation);
 
 export default router;

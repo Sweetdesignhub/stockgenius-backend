@@ -87,27 +87,65 @@ const processAndPlaceOrders = async (
     })),
   ];
 
-  // Place orders
-  const orderPromises = combinedData.map(async (order) => {
-    const { stockSymbol, quantity, action } = order;
+  const orderResults = [];
 
-    const orderDetails = {
-      stockSymbol,
-      action,
-      orderType: "MARKET",
-      quantity,
-      limitPrice: 0,
-      stopPrice: 0,
-      productType: "CNC",
-      exchange: "NSE",
-      autoTrade: true,
-    };
+  for (const order of combinedData) {
+    try {
+      const { stockSymbol, quantity, action } = order;
 
-    return await placeOrderBot({ body: orderDetails, params: { userId } }, res);
-  });
+      // Prepare order details
+      const orderDetails = {
+        stockSymbol,
+        action,
+        orderType: "MARKET",
+        quantity,
+        limitPrice: 0,
+        stopPrice: 0,
+        productType: "CNC",
+        exchange: "NSE",
+        autoTrade: true,
+      };
 
-  return await Promise.all(orderPromises);
+      // Place the order
+      const result = await placeOrderBot({ body: orderDetails, params: { userId } }, res);
+
+      if (result && result.success) {
+        orderResults.push({
+          stockSymbol,
+          action,
+          quantity,
+          status: "Success",
+        });
+      } else {
+        orderResults.push({
+          stockSymbol,
+          action,
+          quantity,
+          status: "Failed",
+          message: result?.message || "Unknown error",
+        });
+      }
+    } catch (error) {
+      console.error(`Error placing order for ${order.stockSymbol}:`, error);
+
+      // Log the failed order details
+      orderResults.push({
+        stockSymbol: order.stockSymbol,
+        action: order.action,
+        quantity: order.quantity,
+        status: "Failed",
+        message: error.message,
+      });
+    }
+  }
+
+  // Return a summary of all order results
+  return {
+    success: orderResults.every((result) => result.status === "Success"),
+    details: orderResults,
+  };
 };
+
 
 // Main Function
 export const activateAutoTradeBotCNC = async (req, res) => {
@@ -172,7 +210,7 @@ export const activateAutoTradeBotCNC = async (req, res) => {
           userId,
           decisions.decision,
           reinvestmentData.reinvestment,
-          res
+          // res
         );
 
         console.log("Orders processed:", orderResults);
@@ -185,6 +223,8 @@ export const activateAutoTradeBotCNC = async (req, res) => {
 
         bot.dynamicData[0].status = "Stopped";
         await bot.save();
+
+        console.log(error);
 
         await sendCoreEngineEmail(userId, user.name, error, "PaperTrading");
         await sendUserBotStoppedEmail(user.email, user.name, "paperTrading");
@@ -219,9 +259,12 @@ export const activateAutoTradeBotCNC = async (req, res) => {
       .json({ message: "Auto-trade bot activated successfully" });
   } catch (error) {
     console.error("Error activating auto-trade bot:", error);
-    return res
-      .status(500)
-      .json({ message: "Server error", error: error.message });
+    // Ensure no multiple responses
+    if (!res.headersSent) {
+      return res
+        .status(500)
+        .json({ message: "Server error", error: error.message });
+    }
   }
 };
 
@@ -282,9 +325,12 @@ export const deactivateAutoTradeBotCNC = async (req, res) => {
     });
   } catch (error) {
     console.error("Error deactivating auto trade bot:", error);
-    return res.status(500).json({ message: "Server error", error: error.message });
+    if (!res.headersSent) {
+      return res.status(500).json({ message: "Server error", error: error.message });
+    }
   }
 };
+
 
 
 

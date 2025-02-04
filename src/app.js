@@ -27,6 +27,8 @@ import paperTradesRoutes from "./routes/paperTrading/paperTrade.route.js";
 import activateBotRoutes from './routes/autoTradeBot/activateBot.route.js'
 import processPendingOrders from "./services/paperTrading/processPendingOrders.js";
 
+import './services/paperTrading/activateDeactivateBot.js'
+
 import stockRealTimePrice from './routes/stock.route.js'
 import movePositionsToHoldings from "./services/paperTrading/movePositionsToHoldings.js";
 // import startBotSchedulerPT from "./services/paperTrading/paperTradingBotScheduler.js";
@@ -60,7 +62,7 @@ app.use(
       "X-XSRF-TOKEN",
       "X-Requested-With",
     ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE","PATCH", "OPTIONS"],
   })
 );
 
@@ -124,51 +126,52 @@ startBotScheduler();
 
 //script to create papertrade default bot
 
-// const createDefaultBotsForExistingUsers = async () => {
-//   try {
-//     const users = await User.find(); // Fetch all users
+const createDefaultBotsForExistingUsers = async () => {
+  try {
+    const users = await User.find(); // Fetch all users
 
-//     for (const user of users) {
-//       // Check if the user already has a default bot
-//       const existingBot = await Bot.findOne({ userId: user._id, isDefault: true });
+    for (const user of users) {
+      // Check if the user already has a default bot
+      const existingBot = await Bot.findOne({ userId: user._id, isDefault: true });
 
-//       if (!existingBot) {
-//         try {
-//           // Create a default bot if none exists
-//           await Bot.create({
-//             userId: user._id,
-//             name: 'Default PaperTradeBot', // Corrected field
-//             profitPercentage: '5', // Profit Percentage as a string
-//             riskPercentage: '2', // Risk Percentage as a string
-//             productType: 'CNC',
-//             isDefault: true,
-//             broker: 'PaperTrading',
-//             dynamicData: [
-//               {
-//                 tradeRatio: 50,
-//                 profitGained: 0,
-//                 workingTime: "0",
-//                 todaysBotTime: "0",
-//                 currentWeekTime: "0",
-//                 totalBalance: 0,
-//                 status: 'Inactive',
-//                 limits: 0,
-//               },
-//             ],
-//           });
+      if (!existingBot) {
+        try {
+          // Create a default bot if none exists
+          await Bot.create({
+            userId: user._id,
+            name: 'Default PaperTradeBot', // Corrected field
+            profitPercentage: '5', // Profit Percentage as a string
+            riskPercentage: '2', // Risk Percentage as a string
+            productType: 'CNC',
+            isDefault: true,
+            isActive: false,
+            broker: 'PaperTrading',
+            dynamicData: [
+              {
+                tradeRatio: 50,
+                profitGained: 0,
+                workingTime: "0",
+                todaysBotTime: "0",
+                currentWeekTime: "0",
+                totalBalance: 0,
+                status: 'Inactive',
+                limits: 0,
+              },
+            ],
+          });
 
-//           console.log(`Default bot created for user: ${user._id}`);
-//         } catch (botError) {
-//           console.error(`Error creating bot for user ${user._id}:`, botError.message);
-//         }
-//       } else {
-//         console.log(`Default bot already exists for user: ${user._id}`);
-//       }
-//     }
-//   } catch (error) {
-//     console.error('Error fetching users or creating bots:', error.message);
-//   }
-// };
+          console.log(`Default bot created for user: ${user._id}`);
+        } catch (botError) {
+          console.error(`Error creating bot for user ${user._id}:`, botError.message);
+        }
+      } else {
+        console.log(`Default bot already exists for user: ${user._id}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching users or creating bots:', error.message);
+  }
+};
 
 // // Run the script
 // createDefaultBotsForExistingUsers();
